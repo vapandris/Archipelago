@@ -210,7 +210,7 @@ ECS_QueryResult* ECS_Querry(ComponentSignature signature)
     state.queryResult.size = 0;
 
     for(uint32_t i = 0; i < state.entityStore.storeSize; ++i) {
-        if(state.entityStore.entitySignatures[i] & signature == state.entityStore.entitySignatures[i])
+        if((state.entityStore.entitySignatures[i] & signature) == state.entityStore.entitySignatures[i])
             state.queryResult.entityList[state.queryResult.size++] = (Entity){.id = i};
     }
 

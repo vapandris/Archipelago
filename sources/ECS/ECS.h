@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-#define NO_COMPONENTS  0x0000
 #define ANY_COMPONENTS 0x0000
 
 typedef struct Entity
@@ -23,7 +22,7 @@ typedef uint32_t ComponentSignature;
 typedef struct ECS_QueryResult
 {
     uint32_t  size;
-    uint32_t* entityList;
+    Entity* entityList;
 } ECS_QueryResult;
 
 

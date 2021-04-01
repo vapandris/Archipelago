@@ -13,7 +13,7 @@
 
 typedef struct Entity
 {
-    uint32_t id;
+    uint32_t signature;
 } Entity;
 
 typedef uint32_t ComponentSignature;
@@ -22,7 +22,7 @@ typedef uint32_t ComponentSignature;
 typedef struct ECS_QueryResult
 {
     uint32_t  size;
-    Entity* entityList;
+    uint32_t* entityIdList;
 } ECS_QueryResult;
 
 
@@ -35,11 +35,11 @@ typedef struct ECS_ComponentData {
 void    ECS_Init(uint32_t capacity, uint8_t componentCount, ...);
 void    ECS_Quit();
 
-Entity  ECS_CreateEntity();
-void*   ECS_GetComponent(Entity entity, ComponentSignature signature);
-void    ECS_AddComponent(Entity entity, ComponentSignature signature, void* data);
-void    ECS_RemoveComponent(Entity entity, ComponentSignature signature);
-bool    ECS_HasComponent(Entity entity, ComponentSignature signature);
-void    ECS_KillEntity(Entity entity);
+uint32_t    ECS_CreateEntity();
+void*       ECS_GetComponent(uint32_t entityId, ComponentSignature signature);
+void        ECS_AddComponent(uint32_t entityId, ComponentSignature signature, void* data);
+void        ECS_RemoveComponent(uint32_t entityId, ComponentSignature signature);
+bool        ECS_HasComponent(uint32_t entityId, ComponentSignature signature);
+void        ECS_KillEntity(uint32_t entityId);
 
-ECS_QueryResult* ECS_Querry(ComponentSignature signature);
+ECS_QueryResult* ECS_Query(ComponentSignature signature);

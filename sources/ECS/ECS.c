@@ -101,7 +101,7 @@ void ECS_Init(uint32_t capacity, uint8_t componentCount, ...)
 
     componentStore->data = malloc(componentStore->clusterSize * componentStore->storeCapacity);
     entityStore->entitySignatures = malloc(sizeof(*entityStore->entitySignatures) * entityStore->storeCapacity);
-    queryResult->entityList = malloc(sizeof(*queryResult->entityList) * capacity);
+    queryResult->entityIdList = malloc(sizeof(*queryResult->entityIdList) * capacity);
 }
 
 
@@ -112,28 +112,29 @@ void ECS_Quit()
     free(state.componentStore.signatures);
     free(state.componentStore.data);
     free(state.entityStore.entitySignatures);
-    free(state.queryResult.entityList);
+    free(state.queryResult.entityIdList);
 }
 
 
-Entity  ECS_CreateEntity()
+uint32_t ECS_CreateEntity()
 {
     assert(state.entityStore.storeCapacity == state.componentStore.storeCapacity);
     assert(state.entityStore.storeSize == state.componentStore.storeSize);
 
-    Entity result;
+    uint32_t newId;
 
-    result.id = state.entityStore.storeSize++;
-    if(state.entityStore.storeCapacity == result.id) {
+    newId = state.entityStore.storeSize++;
+    state.componentStore.storeSize++;
+    if(state.entityStore.storeCapacity == newId) {
         uint32_t newCapacity = state.entityStore.storeCapacity * 2;
 
-        Entity* newQuery = realloc(state.queryResult.entityList, newCapacity * sizeof(*newQuery));
+        uint32_t* newQuery = realloc(state.queryResult.entityIdList, newCapacity * sizeof(*newQuery));
         ComponentSignature* newSignatureList = realloc(state.entityStore.entitySignatures, newCapacity * sizeof(*newSignatureList));
         void* newData = realloc(state.componentStore.data, newCapacity * state.componentStore.clusterSize);
 
         assert(newQuery == NULL || newSignatureList == NULL || newData == NULL);
 
-        state.queryResult.entityList = newQuery;
+        state.queryResult.entityIdList = newQuery;
         state.entityStore.entitySignatures = newSignatureList;
         state.componentStore.data = newData;
 
@@ -141,62 +142,62 @@ Entity  ECS_CreateEntity()
         state.entityStore.storeCapacity = newCapacity;
     }
 
-    state.entityStore.entitySignatures[result.id] = NO_COMPONENTS;
+    state.entityStore.entitySignatures[newId] = NO_COMPONENTS;
 
-    return result;
+    return newId;
 }
 
 
-void* ECS_GetComponent(Entity entity, ComponentSignature signature)
+void* ECS_GetComponent(uint32_t entityId, ComponentSignature signature)
 {
-    assert(entity.id < state.componentStore.storeSize);
+    assert(entityId < state.componentStore.storeSize);
     assert(ExactlyOneBitIsSet(signature));
 
     uint8_t componentIndex = FindIndexToSignature(signature);
-    return (uint8_t*)state.componentStore.data + (entity.id * state.componentStore.clusterSize + state.componentStore.offsetSizes[componentIndex]);
+    return (uint8_t*)state.componentStore.data + (entityId * state.componentStore.clusterSize + state.componentStore.offsetSizes[componentIndex]);
 }
 
 
-void ECS_AddComponent(Entity entity, ComponentSignature signature, void* data)
+void ECS_AddComponent(uint32_t entityId, ComponentSignature signature, void* data)
 {
-    assert(entity.id < state.componentStore.storeSize);
+    assert(entityId < state.componentStore.storeSize);
     assert(ExactlyOneBitIsSet(signature));
 
     uint8_t componentIndex = FindIndexToSignature(signature);
     size_t size = state.componentStore.dataSizes[componentIndex];
-    state.entityStore.entitySignatures[entity.id] |= signature;
-    void* component = ECS_GetComponent(entity, signature);
+    state.entityStore.entitySignatures[entityId] |= signature;
+    void* component = ECS_GetComponent(entityId, signature);
     memcpy(component, data, size);
 }
 
 
-void ECS_RemoveComponent(Entity entity, ComponentSignature signature)
+void ECS_RemoveComponent(uint32_t entityId, ComponentSignature signature)
 {
-    assert(entity.id < state.componentStore.storeSize);
+    assert(entityId < state.componentStore.storeSize);
     assert(ExactlyOneBitIsSet(signature));
 
-    state.entityStore.entitySignatures[entity.id] &= ~signature;
+    state.entityStore.entitySignatures[entityId] &= ~signature;
 }
 
 
-bool ECS_HasComponent(Entity entity, ComponentSignature signature)
+bool ECS_HasComponent(uint32_t entityId, ComponentSignature signature)
 {
-    assert(entity.id < state.componentStore.storeSize);
+    assert(entityId < state.componentStore.storeSize);
     assert(ExactlyOneBitIsSet(signature));
 
-    return state.entityStore.entitySignatures[entity.id] & signature;
+    return state.entityStore.entitySignatures[entityId] & signature;
 }
 
 
-void ECS_KillEntity(Entity entity)
+void ECS_KillEntity(uint32_t entityId)
 {
-    assert(entity.id < state.componentStore.storeSize);
+    assert(entityId < state.componentStore.storeSize);
     assert(state.entityStore.storeSize == state.componentStore.storeSize);
 
     uint32_t size = state.entityStore.storeSize - 1;
-    state.entityStore.entitySignatures[entity.id] = state.entityStore.entitySignatures[size];
+    state.entityStore.entitySignatures[entityId] = state.entityStore.entitySignatures[size];
 
-    memcpy((uint8_t*)state.componentStore.data + (entity.id * state.componentStore.clusterSize),
+    memcpy((uint8_t*)state.componentStore.data + (entityId * state.componentStore.clusterSize),
            (uint8_t*)state.componentStore.data + (size * state.componentStore.clusterSize),
            state.componentStore.clusterSize
     );
@@ -205,13 +206,13 @@ void ECS_KillEntity(Entity entity)
 }
 
 
-ECS_QueryResult* ECS_Querry(ComponentSignature signature)
+ECS_QueryResult* ECS_Query(ComponentSignature signature)
 {
     state.queryResult.size = 0;
 
     for(uint32_t i = 0; i < state.entityStore.storeSize; ++i) {
-        if((state.entityStore.entitySignatures[i] & signature) == state.entityStore.entitySignatures[i])
-            state.queryResult.entityList[state.queryResult.size++] = (Entity){.id = i};
+        if((state.entityStore.entitySignatures[i] & signature) == signature)
+            state.queryResult.entityIdList[state.queryResult.size++] = i;
     }
 
     return &state.queryResult;

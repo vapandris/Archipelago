@@ -1,0 +1,3 @@
+ProjectSources += files(
+    'TextureManager.c'
+)

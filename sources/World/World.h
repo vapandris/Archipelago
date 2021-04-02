@@ -1,13 +1,14 @@
 
 #pragma once
 
-// from SDL2
-#include <SDL2/SDL_render.h>
+// from Base
+#include "Camera/Camera.h"
+#include "Camera/RenderingData.h"
 
 typedef struct World World;
 
-World*  World_Create();
+World*  World_Create(Camera* camera);
 void    World_Destroy(World* self);
 
 void World_Generate(World* self, unsigned seed);
-void World_DrawEntities(World* self, SDL_Renderer* renderer);
+void World_DrawEntities(World* self, Camera_RenderingData* renderingData);

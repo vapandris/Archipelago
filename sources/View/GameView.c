@@ -13,6 +13,10 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_stdinc.h>
 
+// from Camera
+#include "Camera/Camera.h"
+#include "Camera/RenderingData.h"
+
 // from TextureManager
 #include "TextureManager/TextureManager.h"
 
@@ -24,6 +28,7 @@
 
 struct View_GameView
 {
+    Camera camera;
     SDL_Window* window;
     SDL_Renderer* renderer;
     World* world;
@@ -45,7 +50,14 @@ View_GameView* View_GameView_Create()
     result->renderer = SDL_CreateRenderer(result->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     TextureManager_Init(result->renderer);
     
-    result->world = World_Create();
+
+    int w, h;
+    SDL_GetWindowSize(result->window, &w, &h);
+    double screenRatio = (double)w / h;
+    result->camera.w = 640.0;
+    result->camera.h = result->camera.w / screenRatio;
+
+    result->world = World_Create(&result->camera);
 
     return result;
 }
@@ -64,6 +76,13 @@ void View_GameView_Loop(View_GameView* self)
 {
     srand(time(NULL));
     World_Generate(self->world, rand());
+
+    Camera_RenderingData renderingData = {
+        .camera = &self->camera,
+        .renderer = self->renderer
+    };
+
+    SDL_GetWindowSize(self->window, &renderingData.windowWidth, &renderingData.windowHeight);
 
     bool done = false;
     Uint32 previous = SDL_GetTicks();
@@ -84,7 +103,7 @@ void View_GameView_Loop(View_GameView* self)
             lag -= MS_PER_UPDATE;
         }
 
-        World_DrawEntities(self->world, self->renderer);
+        World_DrawEntities(self->world, &renderingData);
         SDL_RenderPresent(self->renderer);
         //SDL_Delay();
     } while(!done);

@@ -25,13 +25,14 @@ struct World
 {
     unsigned seed;
     Camera* camera;
+    ECS_EntityStore* entities;
 };
 
 World* World_Create(Camera* camera)
 {
     World* result = malloc(sizeof *result);
 
-    ECS_Init(1, 2,
+    result->entities = ECS_EntityStore_Create(1, 2,
         (ECS_ComponentData){.size = sizeof(Components_Graphics),    .signature = GRAPHICS_SIGNATURE},
         (ECS_ComponentData){.size = sizeof(Components_Input),       .signature = INPUT_SIGNATURE}
     );
@@ -43,7 +44,7 @@ World* World_Create(Camera* camera)
 
 void World_Destroy(World* self)
 {
-    ECS_Quit();
+    ECS_EntityStore_Destroy(self->entities);
     free(self);
 }
 
@@ -51,7 +52,7 @@ void World_Destroy(World* self)
 void World_Generate(World* self, unsigned seed)
 {
     self->seed = seed;
-    uint32_t playerId = ECS_CreateEntity();
+    EntityId playerId = ECS_EntityStore_CreateEntity(self->entities);
     Components_Graphics graphics = {
         .rect = {.x = 50, .y = 50, .w = 48, .h = 96},
         .texture = TextureManager_GetPlayerTexture()
@@ -59,17 +60,17 @@ void World_Generate(World* self, unsigned seed)
     self->camera->x = (graphics.rect.x * 1.5) - (self->camera->w / 2.0);
     self->camera->y = (graphics.rect.y * 0.5) + (self->camera->h / 2.0);
 
-    ECS_AddComponent(playerId, GRAPHICS_SIGNATURE, &graphics);
-    ECS_AddComponent(playerId, INPUT_SIGNATURE, &(Components_Input){.x = 0, .y = 0});
+    ECS_EntityStore_AddComponent(self->entities, playerId, GRAPHICS_SIGNATURE, &graphics);
+    ECS_EntityStore_AddComponent(self->entities, playerId, INPUT_SIGNATURE, &(Components_Input){.x = 0, .y = 0});
 }
 
 
 void World_DrawEntities(World* self, Camera_RenderingData* renderingData)
 {
-    ECS_QueryResult* query = ECS_Query(GRAPHICS_SIGNATURE);
+    ECS_QueryResult* query = ECS_EntityStore_Query(self->entities, GRAPHICS_SIGNATURE);
 
     for(UInt32 id = 0; id < query->size; ++id) {
-        Components_Graphics* graphics = ECS_GetComponent(id, GRAPHICS_SIGNATURE);
+        Components_Graphics* graphics = ECS_EntityStore_GetComponent(self->entities, id, GRAPHICS_SIGNATURE);
         SDL_Rect r = Camera_CalculateSDLRectFromRect(self->camera, renderingData->windowWidth, renderingData->windowHeight, &graphics->rect);
         SDL_RenderCopy(renderingData->renderer, graphics->texture, NULL, &r);
     }
@@ -78,10 +79,10 @@ void World_DrawEntities(World* self, Camera_RenderingData* renderingData)
 
 void World_ProcessInput(World* self, const Uint8* keyboardState)
 {
-    ECS_QueryResult* query = ECS_Query(INPUT_SIGNATURE);
+    ECS_QueryResult* query = ECS_EntityStore_Query(self->entities, INPUT_SIGNATURE);
 
-    for(UInt32 id = 0; id < query->size; ++id) {
-        Components_Input* input = ECS_GetComponent(id, INPUT_SIGNATURE);
+    for(EntityId id = 0; id < query->size; ++id) {
+        Components_Input* input = ECS_EntityStore_GetComponent(self->entities, id, INPUT_SIGNATURE);
         if(keyboardState[SDL_SCANCODE_W])
             input->y += 2;
 
@@ -99,12 +100,12 @@ void World_ProcessInput(World* self, const Uint8* keyboardState)
 
 void World_UpdateEntities(World* self)
 {
-    ECS_QueryResult* query = ECS_Query(ANY_COMPONENTS);
+    ECS_QueryResult* query = ECS_EntityStore_Query(self->entities, ANY_COMPONENTS);
 
-    for(UInt32 id = 0; id < query->size; ++id) {
-        if(ECS_HasComponents(id, INPUT_SIGNATURE | GRAPHICS_SIGNATURE)) {
-            Components_Graphics* graphics = ECS_GetComponent(id, GRAPHICS_SIGNATURE);
-            Components_Input* input = ECS_GetComponent(id, INPUT_SIGNATURE);
+    for(EntityId id = 0; id < query->size; ++id) {
+        if(ECS_EntityStore_HasComponents(self->entities, id, INPUT_SIGNATURE | GRAPHICS_SIGNATURE)) {
+            Components_Graphics* graphics = ECS_EntityStore_GetComponent(self->entities, id, GRAPHICS_SIGNATURE);
+            Components_Input* input = ECS_EntityStore_GetComponent(self->entities, id, INPUT_SIGNATURE);
 
             graphics->rect.x += input->x;
             graphics->rect.y += input->y;

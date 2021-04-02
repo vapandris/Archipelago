@@ -17,12 +17,13 @@ typedef struct Entity
 } Entity;
 
 typedef uint32_t ComponentSignature;
+typedef uint32_t EntityId;
 
 
 typedef struct ECS_QueryResult
 {
     uint32_t  size;
-    uint32_t* entityIdList;
+    EntityId* entityIdList;
 } ECS_QueryResult;
 
 
@@ -32,14 +33,17 @@ typedef struct ECS_ComponentData {
 } ECS_ComponentData;
 
 
-void    ECS_Init(uint32_t capacity, uint8_t componentCount, ...);
-void    ECS_Quit();
+typedef struct ECS_EntityStore ECS_EntityStore;
 
-uint32_t    ECS_CreateEntity();
-void*       ECS_GetComponent(uint32_t entityId, ComponentSignature signature);
-void        ECS_AddComponent(uint32_t entityId, ComponentSignature signature, void* data);
-void        ECS_RemoveComponent(uint32_t entityId, ComponentSignature signature);
-bool        ECS_HasComponents(uint32_t entityId, ComponentSignature signature);
-void        ECS_KillEntity(uint32_t entityId);
 
-ECS_QueryResult* ECS_Query(ComponentSignature signature);
+ECS_EntityStore* ECS_EntityStore_Create(uint32_t capacity, uint8_t componentCount, ...);
+void             ECS_EntityStore_Destroy(ECS_EntityStore* self);
+
+EntityId    ECS_EntityStore_CreateEntity(ECS_EntityStore* self);
+void*       ECS_EntityStore_GetComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
+void        ECS_EntityStore_AddComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature, void* data);
+void        ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
+bool        ECS_EntityStore_HasComponents(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
+void        ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId);
+
+ECS_QueryResult* ECS_EntityStore_Query(ECS_EntityStore* self, ComponentSignature signature);

@@ -16,7 +16,7 @@
 // ======================================================
 
 
-typedef struct EntityStore
+struct ECS_EntityStore
 {
     uint8_t componentCount;
     size_t clusterSize;
@@ -32,167 +32,165 @@ typedef struct EntityStore
     uint32_t storeCapacity;
 
     ECS_QueryResult queryResult;
-} EntityStore;
-
-// ==================================================
-// ========= State that holds every Entity ==========
-// ==================================================
-
-static EntityStore state;
+};
 
 // ==================================================
 // ================== ECS funtions ==================
 // ==================================================
 
 static bool     ExactlyOneBitIsSet(ComponentSignature bits);
-static bool     SignatureExists(ComponentSignature newSignature);
-static uint8_t  FindIndexToSignature(ComponentSignature signature);
+static bool     SignatureExists(ECS_EntityStore* self, ComponentSignature newSignature);
+static uint8_t  FindIndexToSignature(ECS_EntityStore* self, ComponentSignature signature);
 
 
-void ECS_Init(uint32_t capacity, uint8_t componentCount, ...)
+ECS_EntityStore* ECS_EntityStore_Create(uint32_t capacity, uint8_t componentCount, ...)
 {
     assert(componentCount < MAX_TYPE_COUNT);
     assert(capacity > 0);
+
+    ECS_EntityStore* result = malloc(sizeof *result);
     
     size_t size = 0;
-    state.dataSizes = malloc(sizeof(*state.dataSizes) * componentCount);
-    state.offsetSizes = malloc(sizeof(*state.offsetSizes) * componentCount);
-    state.signatures = malloc(sizeof(*state.signatures) * componentCount);
+    result->dataSizes = malloc(sizeof(*result->dataSizes) * componentCount);
+    result->offsetSizes = malloc(sizeof(*result->offsetSizes) * componentCount);
+    result->signatures = malloc(sizeof(*result->signatures) * componentCount);
 
     va_list args;
     va_start(args, componentCount);
     for(uint8_t i = 0; i < componentCount; ++i) {
         ECS_ComponentData componentData = va_arg(args, ECS_ComponentData);
-        state.componentCount = i;
+        result->componentCount = i;
 
         assert(ExactlyOneBitIsSet(componentData.signature));
-        assert(!SignatureExists(componentData.signature));
+        assert(!SignatureExists(result, componentData.signature));
 
-        state.dataSizes[i] = componentData.size;
-        state.signatures[i] = componentData.signature;
-        state.offsetSizes[i] = size;
+        result->dataSizes[i] = componentData.size;
+        result->signatures[i] = componentData.signature;
+        result->offsetSizes[i] = size;
 
         size += componentData.size;
     }
-    state.componentCount = componentCount;
-    state.clusterSize = size;
+    result->componentCount = componentCount;
+    result->clusterSize = size;
     va_end(args);
 
-    state.storeCapacity = capacity;
-    state.storeSize = 0;
-    state.storeCapacity = capacity;
-    state.storeSize = 0;
+    result->storeCapacity = capacity;
+    result->storeSize = 0;
+    result->storeCapacity = capacity;
+    result->storeSize = 0;
 
-    state.data = malloc(state.clusterSize * state.storeCapacity);
-    state.entitySignatures = malloc(sizeof(*state.entitySignatures) * state.storeCapacity);
-    state.queryResult.entityIdList = malloc(sizeof(*state.queryResult.entityIdList) * capacity);
+    result->data = malloc(result->clusterSize * result->storeCapacity);
+    result->entitySignatures = malloc(sizeof(*result->entitySignatures) * result->storeCapacity);
+    result->queryResult.entityIdList = malloc(sizeof(*result->queryResult.entityIdList) * capacity);
+
+    return result;
 }
 
 
-void ECS_Quit()
+void ECS_EntityStore_Destroy(ECS_EntityStore* self)
 {
-    free(state.dataSizes);
-    free(state.offsetSizes);
-    free(state.signatures);
-    free(state.data);
-    free(state.entitySignatures);
-    free(state.queryResult.entityIdList);
+    free(self->dataSizes);
+    free(self->offsetSizes);
+    free(self->signatures);
+    free(self->data);
+    free(self->entitySignatures);
+    free(self->queryResult.entityIdList);
 }
 
 
-uint32_t ECS_CreateEntity()
+EntityId ECS_EntityStore_CreateEntity(ECS_EntityStore* self)
 {
-    uint32_t newId;
+    EntityId newId;
 
-    newId = state.storeSize++;
-    if(state.storeCapacity == newId) {
-        uint32_t newCapacity = state.storeCapacity * 2;
+    newId = self->storeSize++;
+    if(self->storeCapacity == newId) {
+        uint32_t newCapacity = self->storeCapacity * 2;
 
-        uint32_t* newQuery = realloc(state.queryResult.entityIdList, newCapacity * sizeof(*newQuery));
-        ComponentSignature* newSignatureList = realloc(state.entitySignatures, newCapacity * sizeof(*newSignatureList));
-        void* newData = realloc(state.data, newCapacity * state.clusterSize);
+        EntityId* newQuery = realloc(self->queryResult.entityIdList, newCapacity * sizeof(*newQuery));
+        ComponentSignature* newSignatureList = realloc(self->entitySignatures, newCapacity * sizeof(*newSignatureList));
+        void* newData = realloc(self->data, newCapacity * self->clusterSize);
 
         assert(newQuery == NULL || newSignatureList == NULL || newData == NULL);
 
-        state.queryResult.entityIdList = newQuery;
-        state.entitySignatures = newSignatureList;
-        state.data = newData;
+        self->queryResult.entityIdList = newQuery;
+        self->entitySignatures = newSignatureList;
+        self->data = newData;
 
-        state.storeCapacity = newCapacity;
-        state.storeCapacity = newCapacity;
+        self->storeCapacity = newCapacity;
+        self->storeCapacity = newCapacity;
     }
 
-    state.entitySignatures[newId] = NO_COMPONENTS;
+    self->entitySignatures[newId] = NO_COMPONENTS;
 
     return newId;
 }
 
 
-void* ECS_GetComponent(uint32_t entityId, ComponentSignature signature)
+void* ECS_EntityStore_GetComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
-    assert(entityId < state.storeSize);
+    assert(entityId < self->storeSize);
     assert(ExactlyOneBitIsSet(signature));
 
-    uint8_t componentIndex = FindIndexToSignature(signature);
-    return (uint8_t*)state.data + (entityId * state.clusterSize + state.offsetSizes[componentIndex]);
+    uint8_t componentIndex = FindIndexToSignature(self, signature);
+    return (uint8_t*)self->data + (entityId * self->clusterSize + self->offsetSizes[componentIndex]);
 }
 
 
-void ECS_AddComponent(uint32_t entityId, ComponentSignature signature, void* data)
+void ECS_EntityStore_AddComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature, void* data)
 {
     assert(ExactlyOneBitIsSet(signature));
 
-    uint8_t componentIndex = FindIndexToSignature(signature);
-    size_t size = state.dataSizes[componentIndex];
-    state.entitySignatures[entityId] |= signature;
-    void* component = ECS_GetComponent(entityId, signature);
+    uint8_t componentIndex = FindIndexToSignature(self, signature);
+    size_t size = self->dataSizes[componentIndex];
+    self->entitySignatures[entityId] |= signature;
+    void* component = ECS_EntityStore_GetComponent(self, entityId, signature);
     memcpy(component, data, size);
 }
 
 
-void ECS_RemoveComponent(uint32_t entityId, ComponentSignature signature)
+void ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
-    assert(entityId < state.storeSize);
+    assert(entityId < self->storeSize);
     assert(ExactlyOneBitIsSet(signature));
 
-    state.entitySignatures[entityId] &= ~signature;
+    self->entitySignatures[entityId] &= ~signature;
 }
 
 
-bool ECS_HasComponents(uint32_t entityId, ComponentSignature signature)
+bool ECS_EntityStore_HasComponents(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
-    assert(entityId < state.storeSize);
+    assert(entityId < self->storeSize);
 
-    return (state.entitySignatures[entityId] & signature) == signature;
+    return (self->entitySignatures[entityId] & signature) == signature;
 }
 
 
-void ECS_KillEntity(uint32_t entityId)
+void ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId)
 {
-    assert(entityId < state.storeSize);
+    assert(entityId < self->storeSize);
 
-    uint32_t size = state.storeSize - 1;
-    state.entitySignatures[entityId] = state.entitySignatures[size];
+    uint32_t size = self->storeSize - 1;
+    self->entitySignatures[entityId] = self->entitySignatures[size];
 
-    memcpy((uint8_t*)state.data + (entityId * state.clusterSize),
-           (uint8_t*)state.data + (size * state.clusterSize),
-           state.clusterSize
+    memcpy((uint8_t*)self->data + (entityId * self->clusterSize),
+           (uint8_t*)self->data + (size * self->clusterSize),
+           self->clusterSize
     );
-    --state.storeSize;
-    --state.storeSize;
+    --self->storeSize;
+    --self->storeSize;
 }
 
 
-ECS_QueryResult* ECS_Query(ComponentSignature signature)
+ECS_QueryResult* ECS_EntityStore_Query(ECS_EntityStore* self, ComponentSignature signature)
 {
-    state.queryResult.size = 0;
+    self->queryResult.size = 0;
 
-    for(uint32_t i = 0; i < state.storeSize; ++i) {
-        if((state.entitySignatures[i] & signature) == signature)
-            state.queryResult.entityIdList[state.queryResult.size++] = i;
+    for(EntityId i = 0; i < self->storeSize; ++i) {
+        if((self->entitySignatures[i] & signature) == signature)
+            self->queryResult.entityIdList[self->queryResult.size++] = i;
     }
 
-    return &state.queryResult;
+    return &self->queryResult;
 }
 
 
@@ -206,10 +204,10 @@ static bool ExactlyOneBitIsSet(ComponentSignature bits)
 }
 
 
-static bool SignatureExists(ComponentSignature newSignature)
+static bool SignatureExists(ECS_EntityStore* self, ComponentSignature newSignature)
 {
-    for(uint8_t i = 0; i < state.componentCount; ++i) {
-        if(state.signatures[i] == newSignature)
+    for(uint8_t i = 0; i < self->componentCount; ++i) {
+        if(self->signatures[i] == newSignature)
             return true;
     }
 
@@ -217,13 +215,13 @@ static bool SignatureExists(ComponentSignature newSignature)
 }
 
 
-static uint8_t FindIndexToSignature(ComponentSignature signature)
+static uint8_t FindIndexToSignature(ECS_EntityStore* self, ComponentSignature signature)
 {
     assert(ExactlyOneBitIsSet(signature));
-    assert(SignatureExists(signature));
+    assert(SignatureExists(self, signature));
 
-    for(uint8_t i = 0; i < state.componentCount; ++i) {
-        if(state.signatures[i] == signature)
+    for(uint8_t i = 0; i < self->componentCount; ++i) {
+        if(self->signatures[i] == signature)
             return i;
     }
 

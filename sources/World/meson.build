@@ -1,3 +1,4 @@
 ProjectSources += files(
-    'World.c'
+    'World.c',
+    'EntityActions.c'
 )

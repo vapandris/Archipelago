@@ -18,6 +18,9 @@
 #include "Components/Graphics.h"
 #include "Components/Input.h"
 
+// from World
+#include "World/EntityActions.h"
+
 // from SDL2
 #include <SDL2/SDL_scancode.h>
 
@@ -67,51 +70,17 @@ void World_Generate(World* self, unsigned seed)
 
 void World_DrawEntities(World* self, Camera_RenderingData* renderingData)
 {
-    ECS_QueryResult* query = ECS_EntityStore_Query(self->entities, GRAPHICS_SIGNATURE);
-
-    for(UInt32 id = 0; id < query->size; ++id) {
-        Components_Graphics* graphics = ECS_EntityStore_GetComponent(self->entities, id, GRAPHICS_SIGNATURE);
-        SDL_Rect r = Camera_CalculateSDLRectFromRect(self->camera, renderingData->windowWidth, renderingData->windowHeight, &graphics->rect);
-        SDL_RenderCopy(renderingData->renderer, graphics->texture, NULL, &r);
-    }
+    World_EntityActions_DrawEntites(self->entities, renderingData);
 }
 
 
 void World_ProcessInput(World* self, const Uint8* keyboardState)
 {
-    ECS_QueryResult* query = ECS_EntityStore_Query(self->entities, INPUT_SIGNATURE);
-
-    for(EntityId id = 0; id < query->size; ++id) {
-        Components_Input* input = ECS_EntityStore_GetComponent(self->entities, id, INPUT_SIGNATURE);
-        if(keyboardState[SDL_SCANCODE_W])
-            input->y += 2;
-
-        if(keyboardState[SDL_SCANCODE_S])
-            input->y -= 2;
-
-        if(keyboardState[SDL_SCANCODE_A])
-            input->x -= 2;
-
-        if(keyboardState[SDL_SCANCODE_D])
-            input->x += 2;
-    }
+    World_EntityActions_ProcessInput(self->entities, keyboardState);
 }
 
 
 void World_UpdateEntities(World* self)
 {
-    ECS_QueryResult* query = ECS_EntityStore_Query(self->entities, ANY_COMPONENTS);
-
-    for(EntityId id = 0; id < query->size; ++id) {
-        if(ECS_EntityStore_HasComponents(self->entities, id, INPUT_SIGNATURE | GRAPHICS_SIGNATURE)) {
-            Components_Graphics* graphics = ECS_EntityStore_GetComponent(self->entities, id, GRAPHICS_SIGNATURE);
-            Components_Input* input = ECS_EntityStore_GetComponent(self->entities, id, INPUT_SIGNATURE);
-
-            graphics->rect.x += input->x;
-            graphics->rect.y += input->y;
-
-            input->x = 0;
-            input->y = 0;
-        }
-    }
+    World_EntityActions_UpdateEntities(self->entities);
 }

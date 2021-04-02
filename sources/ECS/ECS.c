@@ -10,12 +10,6 @@
 #define MAX_TYPE_COUNT 32
 #define NO_COMPONENTS  0x0000
 
-
-// ======================================================
-// ================== Internal structs ==================
-// ======================================================
-
-
 struct ECS_EntityStore
 {
     uint8_t componentCount;

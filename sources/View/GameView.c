@@ -99,7 +99,7 @@ void View_GameView_Loop(View_GameView* self)
         done = ProcessInput(self);
 
         while(lag >= MS_PER_UPDATE) {
-            // update
+            World_UpdateEntities(self->world);
             lag -= MS_PER_UPDATE;
         }
 
@@ -125,7 +125,8 @@ static bool ProcessInput(View_GameView* self)
         }
     }
 
-    //const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
+    const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
+    World_ProcessInput(self->world, keyboardState);
 
     return done;
 }

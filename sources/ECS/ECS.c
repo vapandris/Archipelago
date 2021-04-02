@@ -180,12 +180,11 @@ void ECS_RemoveComponent(uint32_t entityId, ComponentSignature signature)
 }
 
 
-bool ECS_HasComponent(uint32_t entityId, ComponentSignature signature)
+bool ECS_HasComponents(uint32_t entityId, ComponentSignature signature)
 {
     assert(entityId < state.componentStore.storeSize);
-    assert(ExactlyOneBitIsSet(signature));
 
-    return state.entityStore.entitySignatures[entityId] & signature;
+    return (state.entityStore.entitySignatures[entityId] & signature) == signature;
 }
 
 

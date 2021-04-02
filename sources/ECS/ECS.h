@@ -39,7 +39,7 @@ uint32_t    ECS_CreateEntity();
 void*       ECS_GetComponent(uint32_t entityId, ComponentSignature signature);
 void        ECS_AddComponent(uint32_t entityId, ComponentSignature signature, void* data);
 void        ECS_RemoveComponent(uint32_t entityId, ComponentSignature signature);
-bool        ECS_HasComponent(uint32_t entityId, ComponentSignature signature);
+bool        ECS_HasComponents(uint32_t entityId, ComponentSignature signature);
 void        ECS_KillEntity(uint32_t entityId);
 
 ECS_QueryResult* ECS_Query(ComponentSignature signature);

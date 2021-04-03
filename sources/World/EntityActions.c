@@ -42,7 +42,7 @@ void World_EntityActions_ProcessInput(ECS_EntityStore* entities, const Uint8* ke
 }
 
 
-void World_EntityActions_UpdateEntities(ECS_EntityStore* entities)
+void World_EntityActions_UpdateEntities(ECS_EntityStore* entities, Camera* camera)
 {
     ECS_QueryResult* query = ECS_EntityStore_Query(entities, ANY_COMPONENTS);
 
@@ -53,6 +53,12 @@ void World_EntityActions_UpdateEntities(ECS_EntityStore* entities)
 
             graphics->rect.x += input->x;
             graphics->rect.y += input->y;
+
+            // Doesn't seem like a bright idea:
+            {
+                camera->x += input->x;
+                camera->y += input->y;
+            }
 
             input->x = 0;
             input->y = 0;

@@ -128,9 +128,9 @@ void World_ProcessInput(World* self, const Uint8* keyboardState)
 }
 
 
-void World_UpdateEntities(World* self)
+void World_UpdateEntities(World* self, Camera* camera)
 {
-    World_EntityActions_UpdateEntities(self->entities);
+    World_EntityActions_UpdateEntities(self->entities, camera);
 }
 
 

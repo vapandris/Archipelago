@@ -7,8 +7,9 @@
 #include "ECS/ECS.h"
 
 // from Camera
+#include "Camera/Camera.h"
 #include "Camera/RenderingData.h"
 
 void World_EntityActions_DrawEntites(ECS_EntityStore* entities, Camera_RenderingData* renderingData);
 void World_EntityActions_ProcessInput(ECS_EntityStore* entities, const Uint8* keyboardState);
-void World_EntityActions_UpdateEntities(ECS_EntityStore* entities);
+void World_EntityActions_UpdateEntities(ECS_EntityStore* entities, Camera* camera);

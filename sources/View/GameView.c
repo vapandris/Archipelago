@@ -99,7 +99,7 @@ void View_GameView_Loop(View_GameView* self)
         done = ProcessInput(self);
 
         while(lag >= MS_PER_UPDATE) {
-            World_UpdateEntities(self->world);
+            World_UpdateEntities(self->world, &self->camera);
             lag -= MS_PER_UPDATE;
         }
 

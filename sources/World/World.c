@@ -3,6 +3,7 @@
 // from std
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 
 // from Base
 #include "Base/Types.h"
@@ -27,9 +28,14 @@
 struct World
 {
     unsigned seed;
+    Rect worldRect;
     Camera* camera;
     ECS_EntityStore* entities;
 };
+
+
+static double LinearGenerator(double x, double multiplyer, double origoX);
+
 
 World* World_Create(Camera* camera)
 {
@@ -41,6 +47,7 @@ World* World_Create(Camera* camera)
     );
 
     result->camera = camera;
+    result->worldRect = (Rect){0};
     return result;
 }
 
@@ -55,14 +62,55 @@ void World_Destroy(World* self)
 void World_Generate(World* self, unsigned seed)
 {
     self->seed = seed;
-    EntityId playerId = ECS_EntityStore_CreateEntity(self->entities);
+    srand(seed);
+    
     Components_Graphics graphics = {
-        .rect = {.x = 50, .y = 50, .w = 48, .h = 96},
+        .rect = {.x = 50, .y = 50, .w = 24, .h = 48},
         .texture = TextureManager_GetPlayerTexture()
     };
     self->camera->x = (graphics.rect.x * 1.5) - (self->camera->w / 2.0);
     self->camera->y = (graphics.rect.y * 0.5) + (self->camera->h / 2.0);
 
+    // Generate the ground:
+    self->worldRect = (Rect){.x = -1000, .y = 1000, .w = 2000, .h = 2000};
+    double tileSize = 32;
+    double x, y;
+    const double xEnd = self->worldRect.x + self->worldRect.w;
+    const double yEnd = self->worldRect.y - self->worldRect.h;
+    const double worldOrigoX = self->worldRect.w / 2 + self->worldRect.x; 
+    for(x = self->worldRect.x; x < xEnd; x += tileSize) {
+        for(y = self->worldRect.y; y > yEnd; y -= tileSize) {
+            EntityId turfId = ECS_EntityStore_CreateEntity(self->entities);
+            bool isGrass = abs(LinearGenerator(x, 0.5, worldOrigoX) - y) <= 150 || abs(LinearGenerator(-x, 0.5, worldOrigoX) - y) <= 150;
+            ECS_EntityStore_AddComponent(self->entities, turfId, GRAPHICS_SIGNATURE,
+                &(Components_Graphics){
+                    .rect.x = x, .rect.y = y, .rect.w = tileSize, .rect.h = tileSize,
+                    .texture = isGrass ? TextureManager_GetLightGrassTexture() : TextureManager_GetSkyTexture()
+                }
+            );
+
+            if(isGrass && rand() % 7 == 0) {
+                EntityId pineId = ECS_EntityStore_CreateEntity(self->entities);
+                ECS_EntityStore_AddComponent(self->entities, pineId, GRAPHICS_SIGNATURE,
+                    &(Components_Graphics){
+                        .rect.x = x, .rect.y = y + tileSize, .rect.w = 34, .rect.h = 51,
+                        .texture = TextureManager_GetPineTexture()
+                    }
+                );
+            } else if(isGrass && rand() % 4 == 0) {
+                EntityId flowerId = ECS_EntityStore_CreateEntity(self->entities);
+                ECS_EntityStore_AddComponent(self->entities, flowerId, GRAPHICS_SIGNATURE,
+                    &(Components_Graphics){
+                        .rect.x = x, .rect.y = y, .rect.w = tileSize, .rect.h = tileSize,
+                        .texture = TextureManager_GetFlowersTexture()
+                    }
+                );
+            }
+        }
+    }
+
+    // Create Player:
+    EntityId playerId = ECS_EntityStore_CreateEntity(self->entities);
     ECS_EntityStore_AddComponent(self->entities, playerId, GRAPHICS_SIGNATURE, &graphics);
     ECS_EntityStore_AddComponent(self->entities, playerId, INPUT_SIGNATURE, &(Components_Input){.x = 0, .y = 0});
 }
@@ -83,4 +131,11 @@ void World_ProcessInput(World* self, const Uint8* keyboardState)
 void World_UpdateEntities(World* self)
 {
     World_EntityActions_UpdateEntities(self->entities);
+}
+
+
+// static functions:
+static double LinearGenerator(double x, double multiplyer, double origoX)
+{
+    return (multiplyer * x) - origoX;
 }

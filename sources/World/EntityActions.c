@@ -26,18 +26,18 @@ void World_EntityActions_ProcessInput(ECS_EntityStore* entities, const Uint8* ke
     ECS_QueryResult* query = ECS_EntityStore_Query(entities, INPUT_SIGNATURE);
 
     for(EntityId id = 0; id < query->size; ++id) {
-        Components_Input* input = ECS_EntityStore_GetComponent(entities, id, INPUT_SIGNATURE);
+        Components_Input* input = ECS_EntityStore_GetComponent(entities, query->entityIdList[id], INPUT_SIGNATURE);
         if(keyboardState[SDL_SCANCODE_W])
-            input->y = 2;
+            input->y = 5;
 
         if(keyboardState[SDL_SCANCODE_S])
-            input->y = -2;
+            input->y = -5;
 
         if(keyboardState[SDL_SCANCODE_A])
-            input->x = -2;
+            input->x = -5;
 
         if(keyboardState[SDL_SCANCODE_D])
-            input->x = 2;
+            input->x = 5;
     }
 }
 

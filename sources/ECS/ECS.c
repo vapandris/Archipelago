@@ -104,7 +104,7 @@ EntityId ECS_EntityStore_CreateEntity(ECS_EntityStore* self)
         ComponentSignature* newSignatureList = realloc(self->entitySignatures, newCapacity * sizeof(*newSignatureList));
         void* newData = realloc(self->data, newCapacity * self->clusterSize);
 
-        assert(newQuery == NULL || newSignatureList == NULL || newData == NULL);
+        assert(newQuery != NULL && newSignatureList != NULL && newData != NULL);
 
         self->queryResult.entityIdList = newQuery;
         self->entitySignatures = newSignatureList;

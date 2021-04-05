@@ -24,8 +24,6 @@ struct ECS_EntityStore
 
     uint32_t storeSize;
     uint32_t storeCapacity;
-
-    ECS_QueryResult queryResult;
 };
 
 // ==================================================
@@ -75,7 +73,6 @@ ECS_EntityStore* ECS_EntityStore_Create(uint32_t capacity, uint8_t componentCoun
 
     result->data = malloc(result->clusterSize * result->storeCapacity);
     result->entitySignatures = malloc(sizeof(*result->entitySignatures) * result->storeCapacity);
-    result->queryResult.entityIdList = malloc(sizeof(*result->queryResult.entityIdList) * capacity);
 
     return result;
 }
@@ -88,7 +85,6 @@ void ECS_EntityStore_Destroy(ECS_EntityStore* self)
     free(self->signatures);
     free(self->data);
     free(self->entitySignatures);
-    free(self->queryResult.entityIdList);
 }
 
 
@@ -100,13 +96,11 @@ EntityId ECS_EntityStore_CreateEntity(ECS_EntityStore* self)
     if(self->storeCapacity == newId) {
         uint32_t newCapacity = self->storeCapacity * 2;
 
-        EntityId* newQuery = realloc(self->queryResult.entityIdList, newCapacity * sizeof(*newQuery));
         ComponentSignature* newSignatureList = realloc(self->entitySignatures, newCapacity * sizeof(*newSignatureList));
         void* newData = realloc(self->data, newCapacity * self->clusterSize);
 
-        assert(newQuery != NULL && newSignatureList != NULL && newData != NULL);
+        assert(newSignatureList != NULL && newData != NULL);
 
-        self->queryResult.entityIdList = newQuery;
         self->entitySignatures = newSignatureList;
         self->data = newData;
 
@@ -177,14 +171,23 @@ void ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId)
 
 ECS_QueryResult* ECS_EntityStore_Query(ECS_EntityStore* self, ComponentSignature signature)
 {
-    self->queryResult.size = 0;
+    ECS_QueryResult* queryResult = malloc(sizeof *queryResult);
+    queryResult->size = 0;
+    queryResult->entityIdList = malloc(sizeof(*queryResult->entityIdList) * self->storeSize);
 
     for(EntityId i = 0; i < self->storeSize; ++i) {
         if((self->entitySignatures[i] & signature) == signature)
-            self->queryResult.entityIdList[self->queryResult.size++] = i;
+            queryResult->entityIdList[queryResult->size++] = i;
     }
 
-    return &self->queryResult;
+    return queryResult;
+}
+
+
+void ECS_QueryResult_Destroy(ECS_QueryResult* self)
+{
+    free(self->entityIdList);
+    free(self);
 }
 
 

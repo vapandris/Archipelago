@@ -16,6 +16,7 @@
 
 // from Components
 #include "Components/Signatures.h"
+#include "Components/Collision.h"
 #include "Components/Graphics.h"
 #include "Components/Input.h"
 
@@ -41,7 +42,8 @@ World* World_Create(Camera* camera)
 {
     World* result = malloc(sizeof *result);
 
-    result->entities = ECS_EntityStore_Create(1, 2,
+    result->entities = ECS_EntityStore_Create(1, 3,
+        (ECS_ComponentData){.size = sizeof(Components_Collision),   .signature = COLLISION_SIGNATURE},
         (ECS_ComponentData){.size = sizeof(Components_Graphics),    .signature = GRAPHICS_SIGNATURE},
         (ECS_ComponentData){.size = sizeof(Components_Input),       .signature = INPUT_SIGNATURE}
     );
@@ -88,6 +90,14 @@ void World_Generate(World* self, unsigned seed)
                     .texture = isGrass ? TextureManager_GetLightGrassTexture() : TextureManager_GetSkyTexture()
                 }
             );
+            if(!isGrass) {
+                ECS_EntityStore_AddComponent(self->entities, turfId, COLLISION_SIGNATURE,
+                    &(Components_Collision){
+                        .hitBox.x = x, .hitBox.y = y, .hitBox.w = tileSize, .hitBox.h = tileSize,
+                        .type = SOLID
+                    }
+                );
+            }
 
             if(isGrass && rand() % 7 == 0) {
                 EntityId pineId = ECS_EntityStore_CreateEntity(self->entities);
@@ -112,6 +122,11 @@ void World_Generate(World* self, unsigned seed)
     // Create Player:
     EntityId playerId = ECS_EntityStore_CreateEntity(self->entities);
     ECS_EntityStore_AddComponent(self->entities, playerId, GRAPHICS_SIGNATURE, &graphics);
+    ECS_EntityStore_AddComponent(self->entities, playerId, COLLISION_SIGNATURE, &(Components_Collision){
+        .hitBox.x = graphics.rect.x, .hitBox.y = graphics.rect.y - graphics.rect.h / 2,
+        .hitBox.w = graphics.rect.w, .hitBox.h = graphics.rect.h / 2,
+        .type = SOLID
+    });
     ECS_EntityStore_AddComponent(self->entities, playerId, INPUT_SIGNATURE, &(Components_Input){.x = 0, .y = 0});
 }
 

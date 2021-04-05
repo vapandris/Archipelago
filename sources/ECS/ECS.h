@@ -47,3 +47,5 @@ bool        ECS_EntityStore_HasComponents(ECS_EntityStore* self, EntityId entity
 void        ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId);
 
 ECS_QueryResult* ECS_EntityStore_Query(ECS_EntityStore* self, ComponentSignature signature);
+
+void    ECS_QueryResult_Destroy(ECS_QueryResult* self);

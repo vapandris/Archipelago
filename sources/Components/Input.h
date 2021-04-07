@@ -1,7 +1,6 @@
 #pragma once
 
+// from Base
+#include "Base/Point.h"
 
-typedef struct  Components_Input
-{
-    double x, y;
-} Components_Input;
+typedef Point Components_Input;

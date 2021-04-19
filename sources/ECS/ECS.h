@@ -41,11 +41,12 @@ void             ECS_EntityStore_Destroy(ECS_EntityStore* self);
 
 EntityId    ECS_EntityStore_CreateEntity(ECS_EntityStore* self);
 void*       ECS_EntityStore_GetComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
+const void* ECS_EntityStore_GetConstComponent(const ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
 void        ECS_EntityStore_AddComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature, void* data);
 void        ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
-bool        ECS_EntityStore_HasComponents(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
+bool        ECS_EntityStore_HasComponents(const ECS_EntityStore* self, EntityId entityId, ComponentSignature signature);
 void        ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId);
 
-ECS_QueryResult* ECS_EntityStore_Query(ECS_EntityStore* self, ComponentSignature signature);
+ECS_QueryResult* ECS_EntityStore_Query(const ECS_EntityStore* self, ComponentSignature signature);
 
 void    ECS_QueryResult_Destroy(ECS_QueryResult* self);

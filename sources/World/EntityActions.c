@@ -15,10 +15,16 @@
 // from Collision
 #include "Collision/CollisionDetection.h"
 
+// from Pathfinding
+#include "Pathfinding/AStar.h"
+
+
+#include <stdio.h>
 
 void World_EntityActions_DrawEntites(ECS_EntityStore* entities, Camera_RenderingData* renderingData)
 {
     ECS_QueryResult* query = ECS_EntityStore_Query(entities, GRAPHICS_SIGNATURE);
+
 
     for(UInt32 i = 0; i < query->size; ++i) {
         EntityId id = query->entityIdList[i];
@@ -27,8 +33,43 @@ void World_EntityActions_DrawEntites(ECS_EntityStore* entities, Camera_Rendering
         SDL_RenderCopy(renderingData->renderer, graphics->texture, NULL, &r);
     }
 
-    ECS_QueryResult_Destroy(query);
+    Rect playerHitBox = ((const Components_Collision*)ECS_EntityStore_GetConstComponent(entities, query->size - 1, COLLISION_SIGNATURE))->hitBox;
+    DataStructures_UnorderedArray* points = Pathfinding_SolveAStar(&(Point){0, 0}, &(Point){playerHitBox.x, playerHitBox.y}, entities, 6, 2000);
+    if(points == NULL)
+        return; // pls don't
 
+    UInt32 size = DataStructures_UnorderedArray_GetSize(points);
+    Point* prevPoint = (size != NULL) ? DataStructures_UnorderedArray_Get(points, 0) : NULL;
+
+    for(UInt32 i = 1; i < size; ++i) {
+        Point* point = DataStructures_UnorderedArray_Get(points, i);
+        SDL_Rect r1 = Camera_CalculateSDLRectFromRect(renderingData->camera, renderingData->windowWidth, renderingData->windowHeight, 
+            &(Rect){.x = prevPoint->x, .y = prevPoint->y, .w = 0, .h = 0}
+        );
+        SDL_Rect r2 = Camera_CalculateSDLRectFromRect(renderingData->camera, renderingData->windowWidth, renderingData->windowHeight, 
+            &(Rect){.x = point->x, .y = point->y, .w = 0, .h = 0}
+        );
+        SDL_RenderDrawLine(renderingData->renderer, r1.x, r1.y, r2.x, r2.y);
+        prevPoint = point;
+    }
+    DataStructures_UnorderedArray_Destroy(points);
+/*
+    Point p = {0, 0};
+
+    SDL_Rect r = Camera_CalculateSDLRectFromRect(renderingData->camera, renderingData->windowWidth, renderingData->windowHeight,
+        &(Rect){
+            .x = p.x,
+            .y = p.y,
+            .w = 0, .h = 0
+        }
+    );
+
+    r.h = 10;
+    r.w = 10;
+    SDL_RenderFillRect(renderingData->renderer, &r);
+
+    ECS_QueryResult_Destroy(query);*/
+/*
     query = ECS_EntityStore_Query(entities, COLLISION_SIGNATURE);
     for(UInt32 i = 0; i < query->size; ++i) {
         EntityId id = query->entityIdList[i];
@@ -36,7 +77,7 @@ void World_EntityActions_DrawEntites(ECS_EntityStore* entities, Camera_Rendering
         SDL_Rect r = Camera_CalculateSDLRectFromRect(renderingData->camera, renderingData->windowWidth, renderingData->windowHeight, &collision->hitBox);
         SDL_RenderFillRect(renderingData->renderer, &r);
     }
-    ECS_QueryResult_Destroy(query);
+    ECS_QueryResult_Destroy(query);*/
 }
 
 
@@ -63,10 +104,12 @@ void World_EntityActions_ProcessInput(ECS_EntityStore* entities, const Uint8* ke
     ECS_QueryResult_Destroy(query);
 }
 
-#include <stdio.h>
+
 void World_EntityActions_UpdateEntities(ECS_EntityStore* entities, Camera* camera)
 {
     ECS_QueryResult* query = ECS_EntityStore_Query(entities, INPUT_SIGNATURE | GRAPHICS_SIGNATURE | COLLISION_SIGNATURE);
+
+    Rect playerHitBox;
 
     for(UInt32 i = 0; i < query->size; ++i) {
         EntityId id = query->entityIdList[i];
@@ -74,9 +117,13 @@ void World_EntityActions_UpdateEntities(ECS_EntityStore* entities, Camera* camer
         Components_Collision* collision = ECS_EntityStore_GetComponent(entities, id, COLLISION_SIGNATURE);
         Components_Input* input = ECS_EntityStore_GetComponent(entities, id, INPUT_SIGNATURE);
 
+        playerHitBox = collision->hitBox;
+
         if(input->x == 0 && input->y == 0)
             continue;
         
+
+        // resolve collision:
         double xToMove = input->x;
         double yToMove = input->y;
         ECS_QueryResult* query = ECS_EntityStore_Query(entities, COLLISION_SIGNATURE);

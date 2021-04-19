@@ -105,7 +105,6 @@ EntityId ECS_EntityStore_CreateEntity(ECS_EntityStore* self)
         self->data = newData;
 
         self->storeCapacity = newCapacity;
-        self->storeCapacity = newCapacity;
     }
 
     self->entitySignatures[newId] = NO_COMPONENTS;
@@ -121,6 +120,12 @@ void* ECS_EntityStore_GetComponent(ECS_EntityStore* self, EntityId entityId, Com
 
     uint8_t componentIndex = FindIndexToSignature(self, signature);
     return (uint8_t*)self->data + (entityId * self->clusterSize + self->offsetSizes[componentIndex]);
+}
+
+
+const void* ECS_EntityStore_GetConstComponent(const ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
+{
+    return ECS_EntityStore_GetComponent((ECS_EntityStore*)self, entityId, signature);
 }
 
 
@@ -145,7 +150,7 @@ void ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, C
 }
 
 
-bool ECS_EntityStore_HasComponents(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
+bool ECS_EntityStore_HasComponents(const ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
     assert(entityId < self->storeSize);
 
@@ -169,11 +174,14 @@ void ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId)
 }
 
 
-ECS_QueryResult* ECS_EntityStore_Query(ECS_EntityStore* self, ComponentSignature signature)
+ECS_QueryResult* ECS_EntityStore_Query(const ECS_EntityStore* self, ComponentSignature signature)
 {
     ECS_QueryResult* queryResult = malloc(sizeof *queryResult);
     queryResult->size = 0;
     queryResult->entityIdList = malloc(sizeof(*queryResult->entityIdList) * self->storeSize);
+    
+    if(queryResult->entityIdList == NULL)
+        return queryResult;
 
     for(EntityId i = 0; i < self->storeSize; ++i) {
         if((self->entitySignatures[i] & signature) == signature)

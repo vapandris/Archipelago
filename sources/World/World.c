@@ -107,6 +107,11 @@ void World_Generate(World* self, unsigned seed)
                         .texture = TextureManager_GetPineTexture()
                     }
                 );
+                ECS_EntityStore_AddComponent(self->entities, pineId, COLLISION_SIGNATURE,
+                    &(Components_Collision){
+                        .hitBox.x = x + 9, .hitBox.y = y + tileSize - 36, .hitBox.w = 16, .hitBox.h = 11
+                    }
+                );
             } else if(isGrass && rand() % 4 == 0) {
                 EntityId flowerId = ECS_EntityStore_CreateEntity(self->entities);
                 ECS_EntityStore_AddComponent(self->entities, flowerId, GRAPHICS_SIGNATURE,

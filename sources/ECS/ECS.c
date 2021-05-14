@@ -34,6 +34,10 @@ static bool     ExactlyOneBitIsSet(ComponentSignature bits);
 static bool     SignatureExists(ECS_EntityStore* self, ComponentSignature newSignature);
 static uint8_t  FindIndexToSignature(ECS_EntityStore* self, ComponentSignature signature);
 
+static void     SwapEntityId(EntityId* id1, EntityId* id2);
+static uint32_t Partition(ECS_QueryResult* self, uint32_t low, uint32_t high, ECS_EntityStore_Comparator comparator);
+static void     QuickSort(ECS_QueryResult* self, uint32_t low, uint32_t high, ECS_EntityStore_Comparator comparator);
+
 
 ECS_EntityStore* ECS_EntityStore_Create(uint32_t capacity, uint8_t componentCount, ...)
 {
@@ -179,7 +183,8 @@ ECS_QueryResult* ECS_EntityStore_Query(const ECS_EntityStore* self, ComponentSig
     ECS_QueryResult* queryResult = malloc(sizeof *queryResult);
     queryResult->size = 0;
     queryResult->entityIdList = malloc(sizeof(*queryResult->entityIdList) * self->storeSize);
-    
+    queryResult->store = self;
+
     if(queryResult->entityIdList == NULL)
         return queryResult;
 
@@ -189,6 +194,14 @@ ECS_QueryResult* ECS_EntityStore_Query(const ECS_EntityStore* self, ComponentSig
     }
 
     return queryResult;
+}
+
+// sorting with quicksort
+void ECS_EntityStore_SortQuery(ECS_QueryResult* self, ECS_EntityStore_Comparator comparator)
+{
+    if(self->size == 0)
+        return;
+    QuickSort(self, 0, self->size - 1, comparator);
 }
 
 
@@ -222,7 +235,6 @@ static bool SignatureExists(ECS_EntityStore* self, ComponentSignature newSignatu
 
 static uint8_t FindIndexToSignature(ECS_EntityStore* self, ComponentSignature signature)
 {
-    assert(ExactlyOneBitIsSet(signature));
     assert(SignatureExists(self, signature));
 
     for(uint8_t i = 0; i < self->componentCount; ++i) {
@@ -231,4 +243,62 @@ static uint8_t FindIndexToSignature(ECS_EntityStore* self, ComponentSignature si
     }
 
     return 0;
+}
+
+
+static void SwapEntityId(EntityId* id1, EntityId* id2)
+{
+    EntityId tmp = *id1;
+    *id1 = *id2;
+    *id2 = tmp;
+}
+
+
+static uint32_t Partition(ECS_QueryResult* self, uint32_t low, uint32_t high, ECS_EntityStore_Comparator comparator)
+{
+    EntityId* pivot = &self->entityIdList[high];
+    /*
+    if(self->size > 3) {
+        EntityId first = self->entityIdList[low];
+        uint32_t mid = low+(high-low)/2;
+        EntityId midle = self->entityIdList[mid];
+        EntityId last  = self->entityIdList[high];
+
+        if((comparator(self->store, midle, first) && comparator(self->store, first, last)) ||
+           (comparator(self->store, last, first)  && comparator(self->store, first, midle)))
+           *pivot = first;
+        else if((comparator(self->store, first, midle) && comparator(self->store, midle, last)) ||
+                (comparator(self->store, last, midle)  && comparator(self->store, midle, first)))
+            *pivot = midle;
+        else
+            *pivot = last;
+    }
+    */
+    SwapEntityId(&self->entityIdList[high], pivot);
+    const EntityId pi = self->entityIdList[high];
+
+    int32_t i = low - 1;
+
+    for(uint32_t j = low; j < high; ++j)
+    {
+        if(!comparator(self->store, pi, self->entityIdList[j])) {
+            i += 1;
+            SwapEntityId(&self->entityIdList[i], &self->entityIdList[j]);
+        }
+    }
+
+    const uint32_t pivotIndex = i + 1;
+    SwapEntityId(&self->entityIdList[pivotIndex], pivot);
+    return pivotIndex;
+}
+
+
+static void QuickSort(ECS_QueryResult* self, uint32_t low, uint32_t high, ECS_EntityStore_Comparator comparator)
+{
+    if(low < high) {
+        uint32_t pivot = Partition(self, low, high, comparator);
+
+        QuickSort(self, low, pivot - 1, comparator);
+        QuickSort(self, pivot + 1, high, comparator);
+    }
 }

@@ -1,0 +1,140 @@
+Fejlesztői környezet megteremtése:
+	gcc, sdl2, ninja+meson.
+
+Modulok / bekezdések:
+ECS
+	Bevezetés:
+		Mi az az ECS?
+		Mi a célja.
+		Előretekintés
+	
+	Interfész:
+		Bevezetés:
+			Mikről lesz szó.
+		Szükséges adat-struktúrák: (mindegyikhez egy kisebb-nagyonbb bekezdés: Miért, mi a célja, mi is az)
+			Entity
+			ComponentSignature (bitmágia)
+			EntityId
+			ECS_EntityStore
+			ECS_QueryResult
+			ECS_ComponentData
+			ECS_EntityStore_Comparator
+		Hogyan használjuk a függvényeket.
+			. . . (összes fv.-hez leírás)
+			
+	Implementálás:
+		Bevezetés:
+			Mikről lesz szó:
+				ECS_EntityStore belső szerkezetének ismertetése.
+				Statikus függvényekről röviden.
+				Az interfészben megismert függvények működése.
+		ECS_EntityStore:
+			Visszatérni a ECS_Create(...)-hez.
+			miért kellenek, mit csinálnak:
+				componentCount
+				clusterSize
+				dataSizes
+				offsetSizes
+				signatures
+				data
+				entitySignatures
+				storeSize
+				storeCapacity
+				
+		ECS_EntityStore_Create:
+			Hogyan kell a viszaadandó Store belső-állapotát beállítani a paraméterekből.
+			
+		ECS_EntityStore_Destroy:
+			Mindent felszabadít.
+			
+		ECS_EntityStore_CreateEntity:
+			Hogyan hozza létre az új entitást + reallokálhat.
+			
+		ECS_EntityStore_GetComponent:
+			A return-nál, mi történik?
+			// return data[entityId] -> A cluster-ből kiszedni a kért komponest.
+			
+		ECS_EntityStore_AddComponent:
+			Hogyan csinálja.
+			
+		ECS_EntityStore_RemoveComponent:
+			Csak a signature-jában lekapcsolja az adott bitet.
+			
+		ECS_EntityStore_HasComponents:
+			Megnézi, hogy az adott bit 1es-e.
+			
+		ECS_EntityStore_KillEntity:
+			Az utolsó elemet teszi a törölendő entitás helyére + size csökkenttés.
+			
+		ECS_EntityStore_Query:
+			Csupán egy '?' programozási tétel.
+			
+		ECS_EntityStore_SortQuery:
+			Rendezi Query-t a megadott logika szerint.
+			
+		ECS_QueryResult_Destroy:
+			Felszabadít.
+		
+	Lezárás:
+
+Base:
+	Alapvető adatstruktúrák-típusok.
+
+Camera:
+	Bevezetés:
+		Miért van rá szűkség? Ketté akarjuk választani a játék koordinátarendszerét a képernyőjétől.
+		
+	Camera:
+		Interfész:
+			Oda-vissza :P
+			
+		Implementálás:
+			Matek.
+			
+	RenderingData:
+		Összefogja a konvertáláshoz szükséges adatokat.
+		
+ECS akcióban:
+Components:
+	Collision:
+		...
+	Graphics:
+		...
+	Input:
+		...
+	// Signatures-t megemlíteni
+
+DataStructures:
+	UnorderedArray:
+		Interfész:
+			...
+		Implementáció:
+			...
+			
+Pathfinding:
+	Interfész:
+		...
+	Implementáció:
+		...
+
+World:
+	Interfész:
+		...
+	Implementáció:
+		Create: Hogy használja az ECS-t
+		
+		EntityActions:
+			Draw, Update, Process
+	
+View:
+	Create
+	Destroy
+	!Loop!
+
+Tesztek:
+	Unit, manuális, debug feature-ök.
+
+Hivatkozás:
+	(végén?) ...[id]
+
+

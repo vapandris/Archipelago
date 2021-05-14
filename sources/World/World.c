@@ -66,73 +66,35 @@ void World_Generate(World* self, unsigned seed)
     self->seed = seed;
     srand(seed);
     
-    Components_Graphics graphics = {
-        .rect = {.x = 50, .y = 50, .w = 24, .h = 48},
-        .texture = TextureManager_GetPlayerTexture()
-    };
-    self->camera->x = (graphics.rect.x * 1.5) - (self->camera->w / 2.0);
-    self->camera->y = (graphics.rect.y * 0.5) + (self->camera->h / 2.0);
+    EntityId playerId = World_EntityActions_CreatePlayer(self->entities, &(Point){50, 50});
+    const Components_Graphics* playerGraphics = ECS_EntityStore_GetConstComponent(self->entities, playerId, GRAPHICS_SIGNATURE);
+
+    self->camera->x = (playerGraphics->rect.x * 1.5) - (self->camera->w / 2.0);
+    self->camera->y = (playerGraphics->rect.y * 0.5) + (self->camera->h / 2.0);
 
     // Generate the ground:
     self->worldRect = (Rect){.x = -1000, .y = 1000, .w = 2000, .h = 2000};
-    double tileSize = 32;
+    const double tileSize = 32;
     double x, y;
     const double xEnd = self->worldRect.x + self->worldRect.w;
     const double yEnd = self->worldRect.y - self->worldRect.h;
     const double worldOrigoX = self->worldRect.w / 2 + self->worldRect.x; 
     for(x = self->worldRect.x; x < xEnd; x += tileSize) {
         for(y = self->worldRect.y; y > yEnd; y -= tileSize) {
-            EntityId turfId = ECS_EntityStore_CreateEntity(self->entities);
             bool isGrass = abs(LinearGenerator(x, 0.5, worldOrigoX) - y) <= 150 || abs(LinearGenerator(-x, 0.5, worldOrigoX) - y) <= 150;
-            ECS_EntityStore_AddComponent(self->entities, turfId, GRAPHICS_SIGNATURE,
-                &(Components_Graphics){
-                    .rect.x = x, .rect.y = y, .rect.w = tileSize, .rect.h = tileSize,
-                    .texture = isGrass ? TextureManager_GetLightGrassTexture() : TextureManager_GetSkyTexture()
-                }
-            );
-            if(!isGrass) {
-                ECS_EntityStore_AddComponent(self->entities, turfId, COLLISION_SIGNATURE,
-                    &(Components_Collision){
-                        .hitBox.x = x, .hitBox.y = y, .hitBox.w = tileSize, .hitBox.h = tileSize,
-                        .type = SOLID
-                    }
-                );
+            if(isGrass) {
+                World_EntityActions_CreateGrassTile(self->entities, &(Point){x, y});
+            } else {
+                World_EntityActions_CreateVoidTile(self->entities, &(Point){x, y});
             }
 
             if(isGrass && rand() % 7 == 0) {
-                EntityId pineId = ECS_EntityStore_CreateEntity(self->entities);
-                ECS_EntityStore_AddComponent(self->entities, pineId, GRAPHICS_SIGNATURE,
-                    &(Components_Graphics){
-                        .rect.x = x, .rect.y = y + tileSize, .rect.w = 34, .rect.h = 51,
-                        .texture = TextureManager_GetPineTexture()
-                    }
-                );
-                ECS_EntityStore_AddComponent(self->entities, pineId, COLLISION_SIGNATURE,
-                    &(Components_Collision){
-                        .hitBox.x = x + 9, .hitBox.y = y + tileSize - 36, .hitBox.w = 16, .hitBox.h = 11
-                    }
-                );
+                World_EntityActions_CreateTree(self->entities, &(Point){x, y + tileSize});
             } else if(isGrass && rand() % 4 == 0) {
-                EntityId flowerId = ECS_EntityStore_CreateEntity(self->entities);
-                ECS_EntityStore_AddComponent(self->entities, flowerId, GRAPHICS_SIGNATURE,
-                    &(Components_Graphics){
-                        .rect.x = x, .rect.y = y, .rect.w = tileSize, .rect.h = tileSize,
-                        .texture = TextureManager_GetFlowersTexture()
-                    }
-                );
+                World_EntityActions_CreateFlowers(self->entities, &(Point){x, y});
             }
         }
     }
-
-    // Create Player:
-    EntityId playerId = ECS_EntityStore_CreateEntity(self->entities);
-    ECS_EntityStore_AddComponent(self->entities, playerId, GRAPHICS_SIGNATURE, &graphics);
-    ECS_EntityStore_AddComponent(self->entities, playerId, COLLISION_SIGNATURE, &(Components_Collision){
-        .hitBox.x = graphics.rect.x, .hitBox.y = graphics.rect.y - graphics.rect.h / 2,
-        .hitBox.w = graphics.rect.w, .hitBox.h = graphics.rect.h / 2,
-        .type = SOLID
-    });
-    ECS_EntityStore_AddComponent(self->entities, playerId, INPUT_SIGNATURE, &(Components_Input){.x = 0, .y = 0});
 }
 
 

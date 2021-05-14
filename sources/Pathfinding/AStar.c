@@ -97,7 +97,7 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
                 if(FindNodeInArray(closedNodes, &point) == NULL && !DoesPointCollideWithEntity(entities, &point)) {
                     Node* node = FindNodeInArray(openNodes, &point);
                     bool isNodeInCorner = (i != 0 && j != 0);
-                    double newDistanceFromStart = currentNode->distanceFromStart + ((isNodeInCorner) ? sqrt(2*(gridSize*gridSize)) : gridSize);
+                    double newDistanceFromStart = currentNode->distanceFromStart + ((isNodeInCorner) ? gridSize * sqrt(2) : gridSize);
                     if(node == NULL) { // new node
                         Node* newNode = malloc(sizeof *newNode);
                         *newNode = (Node){

@@ -6,9 +6,17 @@
 // from Camera
 #include "Camera.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct Camera_RenderingData
 {
     SDL_Renderer* renderer;
     Camera* camera;
     int windowWidth, windowHeight;
 } Camera_RenderingData;
+
+#ifdef __cplusplus
+}
+#endif

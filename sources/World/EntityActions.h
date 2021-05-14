@@ -13,6 +13,10 @@
 #include "Camera/Camera.h"
 #include "Camera/RenderingData.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void World_EntityActions_DrawEntites(ECS_EntityStore* entities, Camera_RenderingData* renderingData);
 void World_EntityActions_ProcessInput(ECS_EntityStore* entities, const Uint8* keyboardState);
 void World_EntityActions_UpdateEntities(ECS_EntityStore* entities, Camera* camera);
@@ -23,3 +27,7 @@ EntityId World_EntityActions_CreateGrassTile(ECS_EntityStore* entities, Point* t
 EntityId World_EntityActions_CreateVoidTile(ECS_EntityStore* entities, Point* topLeft);
 EntityId World_EntityActions_CreateTree(ECS_EntityStore* entities, Point* topLeft);
 EntityId World_EntityActions_CreateFlowers(ECS_EntityStore* entities, Point* topLeft);
+
+#ifdef __cplusplus
+}
+#endif

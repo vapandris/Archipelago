@@ -9,9 +9,11 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ANY_COMPONENTS 0x0000
-
-
 
 typedef uint32_t ComponentSignature;
 typedef uint32_t EntityId;
@@ -53,3 +55,7 @@ ECS_QueryResult* ECS_EntityStore_Query(const ECS_EntityStore* self, ComponentSig
 void             ECS_EntityStore_SortQuery(ECS_QueryResult* self, ECS_EntityStore_Comparator comparator);
 
 void    ECS_QueryResult_Destroy(ECS_QueryResult* self);
+
+#ifdef __cplusplus
+}
+#endif

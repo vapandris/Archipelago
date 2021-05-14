@@ -7,6 +7,10 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_rect.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum Components_Layer
 {
     Ground = 0,
@@ -20,3 +24,7 @@ typedef struct Components_Graphics
     SDL_Texture* texture;
     Components_Layer layer;
 } Components_Graphics;
+
+#ifdef __cplusplus
+}
+#endif

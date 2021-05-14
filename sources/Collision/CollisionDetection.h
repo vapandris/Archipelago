@@ -55,6 +55,10 @@
 #include "Base/Rect.h"
 #include "Base/Vector.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool CollisionDetection_PointRect(const Point* point, const Rect* rect);
 bool CollisionDetection_RectRect(const Rect* rect1, const Rect* rect2);
 bool CollisionDetection_VectorRect(
@@ -67,3 +71,7 @@ bool CollisionDetection_MovingRectRect(
         const Rect* rect,
         Point* contactPoint, Point* contactNorm, double* collisionTime
 );
+
+#ifdef __cplusplus
+}
+#endif

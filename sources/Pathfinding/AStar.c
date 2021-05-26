@@ -75,7 +75,6 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
 
         DataStructures_UnorderedArray_RemoveElem(openNodes, ind);
         DataStructures_UnorderedArray_AddElem(closedNodes, &currentNode);
-        //currentNode = *(Node**)DataStructures_UnorderedArray_Get(closedNodes, DataStructures_UnorderedArray_GetSize(closedNodes) - 1);
 
         if(currentNode->distanceToEnd < gridSize) {
             goalNode = currentNode;

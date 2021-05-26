@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 
 struct DataStructures_UnorderedArray
 {
@@ -59,6 +60,11 @@ void DataStructures_UnorderedArray_AddElem(DataStructures_UnorderedArray* self, 
 
 void DataStructures_UnorderedArray_RemoveElem(DataStructures_UnorderedArray* self, uint32_t index)
 {
+    if(index >= self->size) {
+        assert(false && "Overindexing!");
+        return;
+    }
+
     memcpy(
         DataStructures_UnorderedArray_Get(self, index),
         DataStructures_UnorderedArray_Get(self, --self->size),
@@ -69,6 +75,11 @@ void DataStructures_UnorderedArray_RemoveElem(DataStructures_UnorderedArray* sel
 
 void* DataStructures_UnorderedArray_Get(DataStructures_UnorderedArray* self, uint32_t index)
 {
+    if(index >= self->size) {
+        assert(false && "Overindexing!");
+        return;
+    }
+    
     return (uint8_t*)self->array + (index * self->emelSize);
 }
 

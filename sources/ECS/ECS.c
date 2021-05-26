@@ -20,7 +20,6 @@ struct ECS_EntityStore
     void* data;
     
     ComponentSignature* entitySignatures;
-    // TODO: FLAGS (alive, type)
 
     uint32_t storeSize;
     uint32_t storeCapacity;
@@ -119,8 +118,8 @@ EntityId ECS_EntityStore_CreateEntity(ECS_EntityStore* self)
 
 void* ECS_EntityStore_GetComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
-    assert(entityId < self->storeSize);
     assert(ExactlyOneBitIsSet(signature));
+    assert(SignatureExists(self, entityId));
 
     uint8_t componentIndex = FindIndexToSignature(self, signature);
     return (uint8_t*)self->data + (entityId * self->clusterSize + self->offsetSizes[componentIndex]);
@@ -136,6 +135,7 @@ const void* ECS_EntityStore_GetConstComponent(const ECS_EntityStore* self, Entit
 void ECS_EntityStore_AddComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature, void* data)
 {
     assert(ExactlyOneBitIsSet(signature));
+    assert(SignatureExists(self, entityId));
 
     uint8_t componentIndex = FindIndexToSignature(self, signature);
     size_t size = self->dataSizes[componentIndex];
@@ -147,8 +147,8 @@ void ECS_EntityStore_AddComponent(ECS_EntityStore* self, EntityId entityId, Comp
 
 void ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
-    assert(entityId < self->storeSize);
     assert(ExactlyOneBitIsSet(signature));
+    assert(SignatureExists(self, entityId));
 
     self->entitySignatures[entityId] &= ~signature;
 }
@@ -156,7 +156,7 @@ void ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, C
 
 bool ECS_EntityStore_HasComponents(const ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
-    assert(entityId < self->storeSize);
+    assert(SignatureExists(self, entityId));
 
     return (self->entitySignatures[entityId] & signature) == signature;
 }
@@ -164,7 +164,7 @@ bool ECS_EntityStore_HasComponents(const ECS_EntityStore* self, EntityId entityI
 
 void ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId)
 {
-    assert(entityId < self->storeSize);
+    assert(SignatureExists(self, entityId));
 
     uint32_t size = self->storeSize - 1;
     self->entitySignatures[entityId] = self->entitySignatures[size];
@@ -173,7 +173,6 @@ void ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId)
            (uint8_t*)self->data + (size * self->clusterSize),
            self->clusterSize
     );
-    --self->storeSize;
     --self->storeSize;
 }
 

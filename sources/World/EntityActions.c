@@ -113,7 +113,6 @@ void World_EntityActions_UpdateEntities(ECS_EntityStore* entities, Camera* camer
 
         if(input->x == 0 && input->y == 0)
             continue;
-        
 
         // resolve collision:
         double xToMove = input->x;

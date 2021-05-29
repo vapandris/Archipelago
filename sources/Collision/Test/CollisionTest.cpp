@@ -5,6 +5,8 @@
 
 static const double EPS = 10e-5;
 
+static double Round(double num);
+
 TEST_CASE("Point-Rect collides")
 {
     Rect rect;
@@ -128,20 +130,43 @@ TEST_CASE("Rect-Rect not collides")
 
 TEST_CASE("Vector-Rect collides")
 {
+    Vector v1; v1.start = {0, 0}; v1.dir = {10, 10};
+    Vector v2; v2.start = {3, 0}; v2.dir = {3, 0};
+    Vector v3; v3.start = {0, -2 + EPS}; v3.dir = {10, 0};
 
+    Rect r = {5, 10, 5, 12};
+
+    Point cP = {0, 0}, cN = {0, 0};
+    double cT = 0;
+    CHECK(CollisionDetection_VectorRect(&v1, &r, &cP, &cN, &cT));
+    CHECK(5 == cP.x); CHECK(5 == cP.y);
+    CHECK(-1 == cN.x); CHECK(0 == cN.y);
+    CHECK(Round(0.5) == Round(cT));
+    CHECK(CollisionDetection_VectorRect(&v2, &r, &cP, &cN, &cT));
+    CHECK(5 == cP.x); CHECK(0 == cP.y);
+    CHECK(-1 == cN.x); CHECK(0 == cN.y);
+    CHECK(Round(0.66666) == Round(cT));
+    CHECK(CollisionDetection_VectorRect(&v3, &r, &cP, &cN, &cT));
+    CHECK(5 == cP.x); CHECK(Round(-1.99999) == Round(cP.y));
+    CHECK(-1 == cN.x); CHECK(0 == cN.y);
+    CHECK(0.5 == cT);
 }
 
 TEST_CASE("Vector-Rect not collides")
 {
+    Vector v1; v1.start = {0, 0}; v1.dir = {-10, -10};
+    Vector v2; v2.start = {3, 0}; v2.dir = {-3, 0};
+    Vector v3; v3.start = {0, -2}; v3.dir = {10, 0};
 
+    Rect r = {5, 10, 5, 12};
+
+    CHECK_FALSE(CollisionDetection_VectorRect(&v1, &r, NULL, NULL, NULL));
+    CHECK_FALSE(CollisionDetection_VectorRect(&v2, &r, NULL, NULL, NULL));
+    CHECK_FALSE(CollisionDetection_VectorRect(&v3, &r, NULL, NULL, NULL));
 }
 
-TEST_CASE("Moving-Rect collides")
+// static functions:
+static double Round(double num)
 {
-
-}
-
-TEST_CASE("Moving-Rect not collides")
-{
-
+    return std::ceil(num * 10000) / 10000;
 }

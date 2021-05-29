@@ -30,8 +30,8 @@ struct ECS_EntityStore
 // ==================================================
 
 static bool     ExactlyOneBitIsSet(ComponentSignature bits);
-static bool     SignatureExists(ECS_EntityStore* self, ComponentSignature newSignature);
-static uint8_t  FindIndexToSignature(ECS_EntityStore* self, ComponentSignature signature);
+static bool     SignatureExists(const ECS_EntityStore* self, ComponentSignature newSignature);
+static uint8_t  FindIndexToSignature(const ECS_EntityStore* self, ComponentSignature signature);
 
 static void     SwapEntityId(EntityId* id1, EntityId* id2);
 static uint32_t Partition(ECS_QueryResult* self, uint32_t low, uint32_t high, ECS_EntityStore_Comparator comparator);
@@ -88,6 +88,7 @@ void ECS_EntityStore_Destroy(ECS_EntityStore* self)
     free(self->signatures);
     free(self->data);
     free(self->entitySignatures);
+    free(self);
 }
 
 
@@ -119,7 +120,7 @@ EntityId ECS_EntityStore_CreateEntity(ECS_EntityStore* self)
 void* ECS_EntityStore_GetComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
     assert(ExactlyOneBitIsSet(signature));
-    assert(SignatureExists(self, entityId));
+    assert(SignatureExists(self, signature));
 
     uint8_t componentIndex = FindIndexToSignature(self, signature);
     return (uint8_t*)self->data + (entityId * self->clusterSize + self->offsetSizes[componentIndex]);
@@ -135,7 +136,8 @@ const void* ECS_EntityStore_GetConstComponent(const ECS_EntityStore* self, Entit
 void ECS_EntityStore_AddComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature, void* data)
 {
     assert(ExactlyOneBitIsSet(signature));
-    assert(SignatureExists(self, entityId));
+    assert(SignatureExists(self, signature));
+    assert(entityId < self->storeSize);
 
     uint8_t componentIndex = FindIndexToSignature(self, signature);
     size_t size = self->dataSizes[componentIndex];
@@ -148,7 +150,8 @@ void ECS_EntityStore_AddComponent(ECS_EntityStore* self, EntityId entityId, Comp
 void ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
     assert(ExactlyOneBitIsSet(signature));
-    assert(SignatureExists(self, entityId));
+    assert(SignatureExists(self, signature));
+    assert(entityId < self->storeSize);
 
     self->entitySignatures[entityId] &= ~signature;
 }
@@ -156,7 +159,8 @@ void ECS_EntityStore_RemoveComponent(ECS_EntityStore* self, EntityId entityId, C
 
 bool ECS_EntityStore_HasComponents(const ECS_EntityStore* self, EntityId entityId, ComponentSignature signature)
 {
-    assert(SignatureExists(self, entityId));
+    assert(SignatureExists(self, signature));
+    assert(entityId < self->storeSize);
 
     return (self->entitySignatures[entityId] & signature) == signature;
 }
@@ -164,7 +168,7 @@ bool ECS_EntityStore_HasComponents(const ECS_EntityStore* self, EntityId entityI
 
 void ECS_EntityStore_KillEntity(ECS_EntityStore* self, EntityId entityId)
 {
-    assert(SignatureExists(self, entityId));
+    assert(entityId < self->storeSize);
 
     uint32_t size = self->storeSize - 1;
     self->entitySignatures[entityId] = self->entitySignatures[size];
@@ -221,7 +225,7 @@ static bool ExactlyOneBitIsSet(ComponentSignature bits)
 }
 
 
-static bool SignatureExists(ECS_EntityStore* self, ComponentSignature newSignature)
+static bool SignatureExists(const ECS_EntityStore* self, ComponentSignature newSignature)
 {
     for(uint8_t i = 0; i < self->componentCount; ++i) {
         if(self->signatures[i] == newSignature)
@@ -232,7 +236,7 @@ static bool SignatureExists(ECS_EntityStore* self, ComponentSignature newSignatu
 }
 
 
-static uint8_t FindIndexToSignature(ECS_EntityStore* self, ComponentSignature signature)
+static uint8_t FindIndexToSignature(const ECS_EntityStore* self, ComponentSignature signature)
 {
     assert(SignatureExists(self, signature));
 

@@ -81,7 +81,9 @@ void World_Generate(World* self, unsigned seed)
     const double worldOrigoX = self->worldRect.w / 2 + self->worldRect.x; 
     for(x = self->worldRect.x; x < xEnd; x += tileSize) {
         for(y = self->worldRect.y; y > yEnd; y -= tileSize) {
-            bool isGrass = abs(LinearGenerator(x, 0.5, worldOrigoX) - y) <= 150 || abs(LinearGenerator(-x, 0.5, worldOrigoX) - y) <= 150;
+            bool isGrass = (abs(LinearGenerator(x, 0.5, worldOrigoX) - y) <= 150 || abs(LinearGenerator(-x, 0.5, worldOrigoX) - y) <= 150) &&
+                           (self->worldRect.x < x && x + tileSize < xEnd);
+            
             if(isGrass) {
                 World_EntityActions_CreateGrassTile(self->entities, &(Point){x, y});
             } else {
@@ -89,7 +91,7 @@ void World_Generate(World* self, unsigned seed)
             }
 
             if(isGrass && rand() % 7 == 0) {
-                World_EntityActions_CreateTree(self->entities, &(Point){x, y + tileSize});
+                World_EntityActions_CreateTree(self->entities, &(Point){x, y + tileSize/1.5});
             } else if(isGrass && rand() % 4 == 0) {
                 World_EntityActions_CreateFlowers(self->entities, &(Point){x, y});
             }

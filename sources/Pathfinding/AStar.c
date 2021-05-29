@@ -43,7 +43,7 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
 )
 {
     if(Distance(start, goal) >= searchRadious)
-        return DataStructures_UnorderedArray_Create(sizeof(Point*), 0);
+        return DataStructures_UnorderedArray_Create(sizeof(Point), 0);
 
     DataStructures_UnorderedArray* openNodes   = DataStructures_UnorderedArray_Create(sizeof(Node*), 32);
     DataStructures_UnorderedArray* closedNodes = DataStructures_UnorderedArray_Create(sizeof(Node*), 32);

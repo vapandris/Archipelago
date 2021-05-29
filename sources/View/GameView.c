@@ -41,7 +41,7 @@ View_GameView* View_GameView_Create()
     View_GameView* result = malloc(sizeof *result);
 
     result->window = SDL_CreateWindow(
-        "POG game",
+        "Archipelago",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         720, 480,
         SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN_DESKTOP
@@ -49,7 +49,6 @@ View_GameView* View_GameView_Create()
 
     result->renderer = SDL_CreateRenderer(result->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     TextureManager_Init(result->renderer);
-    
 
     int w, h;
     SDL_GetWindowSize(result->window, &w, &h);
@@ -110,7 +109,6 @@ void View_GameView_Loop(View_GameView* self)
 }
 
 // static functions:
-
 static bool ProcessInput(View_GameView* self)
 {
     assert(self != NULL);
@@ -124,7 +122,6 @@ static bool ProcessInput(View_GameView* self)
             done = true;
         }
     }
-
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
     World_ProcessInput(self->world, keyboardState);
 

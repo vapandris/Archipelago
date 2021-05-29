@@ -67,9 +67,11 @@ void DataStructures_UnorderedArray_RemoveElem(DataStructures_UnorderedArray* sel
 
     memcpy(
         DataStructures_UnorderedArray_Get(self, index),
-        DataStructures_UnorderedArray_Get(self, --self->size),
+        DataStructures_UnorderedArray_Get(self, self->size - 1),
         self->emelSize
     );
+
+    self->size -= 1;
 }
 
 
@@ -77,9 +79,9 @@ void* DataStructures_UnorderedArray_Get(DataStructures_UnorderedArray* self, uin
 {
     if(index >= self->size) {
         assert(false && "Overindexing!");
-        return;
+        return NULL;
     }
-    
+
     return (uint8_t*)self->array + (index * self->emelSize);
 }
 

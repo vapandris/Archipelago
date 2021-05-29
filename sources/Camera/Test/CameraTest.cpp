@@ -1,5 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest>
+#include <cmath>
 
 #include "Camera/Camera.h"
 
@@ -37,7 +38,7 @@ static const Camera camera4 = {
     2000
 };
 
-static bool IsNear(double d1, double d2);
+static double Round(double num);
 
 TEST_CASE("Convert Rect to SDL_Rect with 0 sizes")
 {
@@ -209,63 +210,137 @@ TEST_CASE("Convert SDL_Rect to Rect with 0 sizes")
     const Rect rect3FromCamera3 = Camera_CalculateRectFromSDLRect(&camera3, windowWidth, windowHeight, &r3);
 
     // Converted using Camera1
-    CHECK(rect1FromCamera1.x == 0);   CHECK(rect1FromCamera1.y == 0);
-    CHECK(rect1FromCamera1.w == 0);   CHECK(rect1FromCamera1.h == 0);
+    CHECK(Round(rect1FromCamera1.x) == Round(0));   CHECK(Round(rect1FromCamera1.y) == Round(0));
+    CHECK(Round(rect1FromCamera1.w) == Round(0));   CHECK(Round(rect1FromCamera1.h) == Round(0));
 
-    CHECK(rect2FromCamera1.x == 20); CHECK(rect2FromCamera1.y == -20);
-    CHECK(rect2FromCamera1.w == 0);  CHECK(rect2FromCamera1.h == 0);
+    CHECK(Round(rect2FromCamera1.x) == Round(20)); CHECK(Round(rect2FromCamera1.y) == Round(-20));
+    CHECK(Round(rect2FromCamera1.w) == Round(0));  CHECK(Round(rect2FromCamera1.h) == Round(0));
 
-    CHECK(rect3FromCamera1.x == -20);  CHECK(rect3FromCamera1.y == 20);
-    CHECK(rect3FromCamera1.w == 0);  CHECK(rect3FromCamera1.h == 0);
+    CHECK(Round(rect3FromCamera1.x) == Round(-20));  CHECK(Round(rect3FromCamera1.y) == Round(20));
+    CHECK(Round(rect3FromCamera1.w) == Round(0));  CHECK(Round(rect3FromCamera1.h) == Round(0));
 
     // Converted using Camera2
-    CHECK(rect1FromCamera2.x == -50.2);  CHECK(rect1FromCamera2.y == 100.75);
-    CHECK(rect1FromCamera2.w == 0);  CHECK(rect1FromCamera2.h == 0);
+    CHECK(Round(rect1FromCamera2.x) == Round(-50.2));  CHECK(Round(rect1FromCamera2.y) == Round(100.75));
+    CHECK(Round(rect1FromCamera2.w) == Round(0));  CHECK(Round(rect1FromCamera2.h) == Round(0));
 
-    CHECK(rect2FromCamera2.x == -36.8666666667);  CHECK(rect2FromCamera2.y == 87.4166666667);
-    CHECK(rect2FromCamera2.w == 0); CHECK(rect2FromCamera2.h == 0);
+    CHECK(Round(rect2FromCamera2.x) == Round(-36.86666));  CHECK(Round(rect2FromCamera2.y) == Round(87.41666));
+    CHECK(Round(rect2FromCamera2.w) == Round(0)); CHECK(Round(rect2FromCamera2.h) == Round(0));
 
-    CHECK(rect3FromCamera2.x == -63.5333333333); CHECK(rect3FromCamera2.y == 114.0833333333);
-    CHECK(rect3FromCamera2.w == 0);  CHECK(rect3FromCamera2.h == 0);
+    CHECK(Round(rect3FromCamera2.x) == Round(-63.53333)); CHECK(Round(rect3FromCamera2.y) == Round(114.08333));
+    CHECK(Round(rect3FromCamera2.w) == Round(0));  CHECK(Round(rect3FromCamera2.h) == Round(0));
 
     // Converted using Camera3
-    CHECK(rect1FromCamera3.x == 250); CHECK(rect1FromCamera3.y == 0);
-    CHECK(rect1FromCamera3.w == 0);   CHECK(rect1FromCamera3.h == 0);
+    CHECK(Round(rect1FromCamera3.x) == Round(250)); CHECK(Round(rect1FromCamera3.y) == Round(0));
+    CHECK(Round(rect1FromCamera3.w) == Round(0));   CHECK(Round(rect1FromCamera3.h) == Round(0));
 
-    CHECK(rect2FromCamera3.x == 290); CHECK(rect2FromCamera3.y == -40);
-    CHECK(rect2FromCamera3.w == 0);   CHECK(rect2FromCamera3.h == 0);
+    CHECK(Round(rect2FromCamera3.x) == Round(290)); CHECK(Round(rect2FromCamera3.y) == Round(-40));
+    CHECK(Round(rect2FromCamera3.w) == Round(0));   CHECK(Round(rect2FromCamera3.h) == Round(0));
 
-    CHECK(rect3FromCamera3.x == 210); CHECK(rect3FromCamera3.y == 40);
-    CHECK(rect3FromCamera3.w == 0);   CHECK(rect3FromCamera3.h == 0);
-
-/*
-    std::cout << "x=" << rect1FromCamera1.x << "y=" << rect1FromCamera1.y << "w=" << rect1FromCamera1.w << "h=" << rect1FromCamera1.h <<  std::endl;
-    std::cout << "x=" << rect2FromCamera1.x << "y=" << rect2FromCamera1.y << "w=" << rect2FromCamera1.w << "h=" << rect2FromCamera1.h <<  std::endl;
-    std::cout << "x=" << rect3FromCamera1.x << "y=" << rect3FromCamera1.y << "w=" << rect3FromCamera1.w << "h=" << rect3FromCamera1.h <<  std::endl;
-
-    std::cout << "x=" << rect1FromCamera2.x << "y=" << rect1FromCamera2.y << "w=" << rect1FromCamera2.w << "h=" << rect1FromCamera2.h <<  std::endl;
-    std::cout << "x=" << rect2FromCamera2.x << "y=" << rect2FromCamera2.y << "w=" << rect2FromCamera2.w << "h=" << rect2FromCamera2.h <<  std::endl;
-    std::cout << "x=" << rect3FromCamera2.x << "y=" << rect3FromCamera2.y << "w=" << rect3FromCamera2.w << "h=" << rect3FromCamera2.h <<  std::endl;
-    
-    std::cout << "x=" << rect1FromCamera3.x << "y=" << rect1FromCamera3.y << "w=" << rect1FromCamera3.w << "h=" << rect1FromCamera3.h <<  std::endl;
-    std::cout << "x=" << rect2FromCamera3.x << "y=" << rect2FromCamera3.y << "w=" << rect2FromCamera3.w << "h=" << rect2FromCamera3.h <<  std::endl;
-    std::cout << "x=" << rect3FromCamera3.x << "y=" << rect3FromCamera3.y << "w=" << rect3FromCamera3.w << "h=" << rect3FromCamera3.h <<  std::endl;
-*/
+    CHECK(Round(rect3FromCamera3.x) == Round(210)); CHECK(Round(rect3FromCamera3.y) == Round(40));
+    CHECK(Round(rect3FromCamera3.w) == Round(0));   CHECK(Round(rect3FromCamera3.h) == Round(0));
 }
 
 TEST_CASE("Convert SDL_Rect to Rect with same sizes")
 {
+    const SDL_Rect r1 = {0, 0, 20, 20};
+    const SDL_Rect r2 = {20, 20, 10, 10};
+    const SDL_Rect r3 = {-20, -20, 50, 50};
 
+    const Rect rect1FromCamera1 = Camera_CalculateRectFromSDLRect(&camera1, windowWidth, windowHeight, &r1);
+    const Rect rect2FromCamera1 = Camera_CalculateRectFromSDLRect(&camera1, windowWidth, windowHeight, &r2);
+    const Rect rect3FromCamera1 = Camera_CalculateRectFromSDLRect(&camera1, windowWidth, windowHeight, &r3);
+    
+    const Rect rect1FromCamera2 = Camera_CalculateRectFromSDLRect(&camera2, windowWidth, windowHeight, &r1);
+    const Rect rect2FromCamera2 = Camera_CalculateRectFromSDLRect(&camera2, windowWidth, windowHeight, &r2);
+    const Rect rect3FromCamera2 = Camera_CalculateRectFromSDLRect(&camera2, windowWidth, windowHeight, &r3);
+
+    const Rect rect1FromCamera3 = Camera_CalculateRectFromSDLRect(&camera3, windowWidth, windowHeight, &r1);
+    const Rect rect2FromCamera3 = Camera_CalculateRectFromSDLRect(&camera3, windowWidth, windowHeight, &r2);
+    const Rect rect3FromCamera3 = Camera_CalculateRectFromSDLRect(&camera3, windowWidth, windowHeight, &r3);
+
+    // Converted using Camera1
+    CHECK(Round(rect1FromCamera1.x) == Round(0));   CHECK(Round(rect1FromCamera1.y) == Round(0));
+    CHECK(Round(rect1FromCamera1.w) == Round(20));   CHECK(Round(rect1FromCamera1.h) == Round(20));
+
+    CHECK(Round(rect2FromCamera1.x) == Round(20)); CHECK(Round(rect2FromCamera1.y) == Round(-20));
+    CHECK(Round(rect2FromCamera1.w) == Round(10));  CHECK(Round(rect2FromCamera1.h) == Round(10));
+
+    CHECK(Round(rect3FromCamera1.x) == Round(-20));  CHECK(Round(rect3FromCamera1.y) == Round(20));
+    CHECK(Round(rect3FromCamera1.w) == Round(50));  CHECK(Round(rect3FromCamera1.h) == Round(50));
+
+    // Converted using Camera2
+    CHECK(Round(rect1FromCamera2.x) == Round(-50.2));  CHECK(Round(rect1FromCamera2.y) == Round(100.75));
+    CHECK(Round(rect1FromCamera2.w) == Round(13.33333));  CHECK(Round(rect1FromCamera2.h) == Round(13.33333));
+
+    CHECK(Round(rect2FromCamera2.x) == Round(-36.86666));  CHECK(Round(rect2FromCamera2.y) == Round(87.41666));
+    CHECK(Round(rect2FromCamera2.w) == Round(6.66666)); CHECK(Round(rect2FromCamera2.h) == Round(6.66666));
+
+    CHECK(Round(rect3FromCamera2.x) == Round(-63.53333)); CHECK(Round(rect3FromCamera2.y) == Round(114.08333));
+    CHECK(Round(rect3FromCamera2.w) == Round(33.33333));  CHECK(Round(rect3FromCamera2.h) == Round(33.33333));
+
+    // Converted using Camera3
+    CHECK(Round(rect1FromCamera3.x) == Round(250)); CHECK(Round(rect1FromCamera3.y) == Round(0));
+    CHECK(Round(rect1FromCamera3.w) == Round(40));   CHECK(Round(rect1FromCamera3.h) == Round(40));
+
+    CHECK(Round(rect2FromCamera3.x) == Round(290)); CHECK(Round(rect2FromCamera3.y) == Round(-40));
+    CHECK(Round(rect2FromCamera3.w) == Round(20));   CHECK(Round(rect2FromCamera3.h) == Round(20));
+
+    CHECK(Round(rect3FromCamera3.x) == Round(210)); CHECK(Round(rect3FromCamera3.y) == Round(40));
+    CHECK(Round(rect3FromCamera3.w) == Round(100));   CHECK(Round(rect3FromCamera3.h) == Round(100));
 }
 
 TEST_CASE("Convert SDL_Rect to Rect with different sizes")
 {
+    const SDL_Rect r1 = {0, 0, 20, 50};
+    const SDL_Rect r2 = {20, 20, 5, 10};
+    const SDL_Rect r3 = {-20, -20, 100, 20};
 
+    const Rect rect1FromCamera1 = Camera_CalculateRectFromSDLRect(&camera1, windowWidth, windowHeight, &r1);
+    const Rect rect2FromCamera1 = Camera_CalculateRectFromSDLRect(&camera1, windowWidth, windowHeight, &r2);
+    const Rect rect3FromCamera1 = Camera_CalculateRectFromSDLRect(&camera1, windowWidth, windowHeight, &r3);
+    
+    const Rect rect1FromCamera2 = Camera_CalculateRectFromSDLRect(&camera2, windowWidth, windowHeight, &r1);
+    const Rect rect2FromCamera2 = Camera_CalculateRectFromSDLRect(&camera2, windowWidth, windowHeight, &r2);
+    const Rect rect3FromCamera2 = Camera_CalculateRectFromSDLRect(&camera2, windowWidth, windowHeight, &r3);
+
+    const Rect rect1FromCamera3 = Camera_CalculateRectFromSDLRect(&camera3, windowWidth, windowHeight, &r1);
+    const Rect rect2FromCamera3 = Camera_CalculateRectFromSDLRect(&camera3, windowWidth, windowHeight, &r2);
+    const Rect rect3FromCamera3 = Camera_CalculateRectFromSDLRect(&camera3, windowWidth, windowHeight, &r3);
+
+    // Converted using Camera1
+    CHECK(Round(rect1FromCamera1.x) == Round(0));   CHECK(Round(rect1FromCamera1.y) == Round(0));
+    CHECK(Round(rect1FromCamera1.w) == Round(20));   CHECK(Round(rect1FromCamera1.h) == Round(50));
+
+    CHECK(Round(rect2FromCamera1.x) == Round(20)); CHECK(Round(rect2FromCamera1.y) == Round(-20));
+    CHECK(Round(rect2FromCamera1.w) == Round(5));  CHECK(Round(rect2FromCamera1.h) == Round(10));
+
+    CHECK(Round(rect3FromCamera1.x) == Round(-20));  CHECK(Round(rect3FromCamera1.y) == Round(20));
+    CHECK(Round(rect3FromCamera1.w) == Round(100));  CHECK(Round(rect3FromCamera1.h) == Round(20));
+
+    // Converted using Camera2
+    CHECK(Round(rect1FromCamera2.x) == Round(-50.2));  CHECK(Round(rect1FromCamera2.y) == Round(100.75));
+    CHECK(Round(rect1FromCamera2.w) == Round(13.33333));  CHECK(Round(rect1FromCamera2.h) == Round(33.33333));
+
+    CHECK(Round(rect2FromCamera2.x) == Round(-36.86666));  CHECK(Round(rect2FromCamera2.y) == Round(87.41666));
+    CHECK(Round(rect2FromCamera2.w) == Round(3.33333)); CHECK(Round(rect2FromCamera2.h) == Round(6.66666));
+
+    CHECK(Round(rect3FromCamera2.x) == Round(-63.53333)); CHECK(Round(rect3FromCamera2.y) == Round(114.08333));
+    CHECK(Round(rect3FromCamera2.w) == Round(66.66666));  CHECK(Round(rect3FromCamera2.h) == Round(13.33333));
+
+    // Converted using Camera3
+    CHECK(Round(rect1FromCamera3.x) == Round(250)); CHECK(Round(rect1FromCamera3.y) == Round(0));
+    CHECK(Round(rect1FromCamera3.w) == Round(40));   CHECK(Round(rect1FromCamera3.h) == Round(100));
+
+    CHECK(Round(rect2FromCamera3.x) == Round(290)); CHECK(Round(rect2FromCamera3.y) == Round(-40));
+    CHECK(Round(rect2FromCamera3.w) == Round(10));   CHECK(Round(rect2FromCamera3.h) == Round(20));
+
+    CHECK(Round(rect3FromCamera3.x) == Round(210)); CHECK(Round(rect3FromCamera3.y) == Round(40));
+    CHECK(Round(rect3FromCamera3.w) == Round(200));   CHECK(Round(rect3FromCamera3.h) == Round(40));
 }
 
 
 // static functions:
-static bool IsNear(double d1, double d2)
+static double Round(double num)
 {
-    
+    return std::ceil(num * 10000) / 10000;
 }

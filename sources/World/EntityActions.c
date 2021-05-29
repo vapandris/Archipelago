@@ -8,6 +8,7 @@
 
 // from SDL2
 #include <SDL2/SDL_scancode.h>
+#include <SDL2/SDL_mouse.h>
 
 // from Components
 #include "Components/Signatures.h"
@@ -45,30 +46,42 @@ void World_EntityActions_DrawEntites(ECS_EntityStore* entities, Camera_Rendering
         SDL_Rect r = Camera_CalculateSDLRectFromRect(renderingData->camera, renderingData->windowWidth, renderingData->windowHeight, &graphics->rect);
         SDL_RenderCopy(renderingData->renderer, graphics->texture, NULL, &r);
     }
-
+    
     // draw pathfinding
-    /*
-    Rect playerHitBox = ((const Components_Collision*)ECS_EntityStore_GetConstComponent(entities, query->size - 1, COLLISION_SIGNATURE))->hitBox;
-    DataStructures_UnorderedArray* points = Pathfinding_SolveAStar(&(Point){0, 0}, &(Point){playerHitBox.x, playerHitBox.y}, entities, 6, 1000);
-    if(points == NULL)
-        return; // pls don't
-
-    UInt32 size = DataStructures_UnorderedArray_GetSize(points);
-    Point* prevPoint = (size != 0) ? DataStructures_UnorderedArray_Get(points, 0) : NULL;
-
-    for(UInt32 i = 1; i < size; ++i) {
-        Point* point = DataStructures_UnorderedArray_Get(points, i);
-        SDL_Rect r1 = Camera_CalculateSDLRectFromRect(renderingData->camera, renderingData->windowWidth, renderingData->windowHeight, 
-            &(Rect){.x = prevPoint->x, .y = prevPoint->y, .w = 0, .h = 0}
+    Rect playerHitBox = ((const Components_Collision*)ECS_EntityStore_GetConstComponent(entities, 0, COLLISION_SIGNATURE))->hitBox;
+    int mouseX, mouseY;
+    bool drawPath = SDL_GetGlobalMouseState(&mouseX, &mouseY) & SDL_BUTTON(SDL_BUTTON_LEFT);
+    if(drawPath) {
+        SDL_SetRenderDrawColor(renderingData->renderer, 255, 0, 0, 255);
+        Rect clickPosition = Camera_CalculateRectFromSDLRect(
+            renderingData->camera, renderingData->windowWidth, renderingData->windowHeight,
+            &(SDL_Rect) {.x = mouseX, .y = mouseY, .w = 0, .h = 0}
         );
-        SDL_Rect r2 = Camera_CalculateSDLRectFromRect(renderingData->camera, renderingData->windowWidth, renderingData->windowHeight, 
-            &(Rect){.x = point->x, .y = point->y, .w = 0, .h = 0}
+
+        DataStructures_UnorderedArray* points = Pathfinding_SolveAStar(
+            &(Point){clickPosition.x, clickPosition.y},
+            &(Point){playerHitBox.x, playerHitBox.y},
+            entities, 6, 100
         );
-        SDL_RenderDrawLine(renderingData->renderer, r1.x, r1.y, r2.x, r2.y);
-        prevPoint = point;
+        if(points != NULL) {
+            UInt32 size = DataStructures_UnorderedArray_GetSize(points);
+            Point* prevPoint = (size != 0) ? DataStructures_UnorderedArray_Get(points, 0) : NULL;
+            for(UInt32 i = 1; i < size; ++i) {
+                Point* point = DataStructures_UnorderedArray_Get(points, i);
+                SDL_Rect lineStart = Camera_CalculateSDLRectFromRect(
+                    renderingData->camera, renderingData->windowWidth, renderingData->windowHeight,
+                    &(Rect){.x = point->x, .y = point->y, 0, 0}
+                );
+                SDL_Rect lineEnd = Camera_CalculateSDLRectFromRect(
+                    renderingData->camera, renderingData->windowWidth, renderingData->windowHeight,
+                    &(Rect){.x = prevPoint->x, .y = prevPoint->y, 0, 0}
+                );
+                SDL_RenderDrawLine(renderingData->renderer, lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
+                prevPoint = point;
+            }
+            DataStructures_UnorderedArray_Destroy(points);
+        }
     }
-    DataStructures_UnorderedArray_Destroy(points);
-    */
     #ifdef DRAW_HITBOX
     DrawHitboxes(entities, renderingData);
     #endif
@@ -95,6 +108,12 @@ void World_EntityActions_ProcessInput(ECS_EntityStore* entities, const Uint8* ke
 
         if(keyboardState[SDL_SCANCODE_D])
             input->x = 5;
+
+        if(keyboardState[SDL_SCANCODE_LCTRL]) {
+            input->x *= 1.5;
+            input->y *= 1.5;
+        }
+
     }
 
     ECS_QueryResult_Destroy(query);
@@ -214,10 +233,10 @@ EntityId World_EntityActions_CreateTree(ECS_EntityStore* entities, Point* topLef
     ECS_EntityStore_AddComponent(entities, newId, GRAPHICS_SIGNATURE, &(Components_Graphics){
         .layer = AboveGround,
         .texture = TextureManager_GetPineTexture(),
-        .rect = {.x = topLeft->x, .y = topLeft->y + tileSize, .w = graphicWidth, .h = graphicHeight}
+        .rect = {.x = topLeft->x, .y = topLeft->y, .w = graphicWidth, .h = graphicHeight}
     });
     ECS_EntityStore_AddComponent(entities, newId, COLLISION_SIGNATURE, &(Components_Collision){
-        .hitBox = {.x = topLeft->x + 9, .y = topLeft->y + tileSize - 36, .w = hitBoxWidth, .h = hitBoxHeight}
+        .hitBox = {.x = topLeft->x + 9, .y = topLeft->y - 36, .w = hitBoxWidth, .h = hitBoxHeight}
     });
 
     return newId;

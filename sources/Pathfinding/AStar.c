@@ -33,7 +33,7 @@ static double Heuristic(const Node* node);
 static bool DoesPointCollideWithEntity(const ECS_EntityStore* entities, const Point* point);
 
 static Node* FindNodeInArray(DataStructures_UnorderedArray* array, const Point* point);
-#include <stdio.h>
+
 DataStructures_UnorderedArray* Pathfinding_SolveAStar(
     const Point* start,
     const Point* goal,
@@ -47,7 +47,6 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
 
     DataStructures_UnorderedArray* openNodes   = DataStructures_UnorderedArray_Create(sizeof(Node*), 32);
     DataStructures_UnorderedArray* closedNodes = DataStructures_UnorderedArray_Create(sizeof(Node*), 32);
-    puts("Start:");
     Node* startNode = malloc(sizeof *startNode);
     *startNode = (Node){
         .coords = {start->x, start->y},
@@ -56,7 +55,6 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
         .parent = NULL
     };
     DataStructures_UnorderedArray_AddElem(openNodes, &startNode);
-    printf("  Open: {%f %f}\n", startNode->coords.x, startNode->coords.y);
     bool foundPath = false;
     Node* goalNode = NULL;
     while(DataStructures_UnorderedArray_GetSize(openNodes) > 0 && !foundPath)
@@ -80,7 +78,6 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
 
         DataStructures_UnorderedArray_RemoveElem(openNodes, ind);
         DataStructures_UnorderedArray_AddElem(closedNodes, &currentNode);
-        printf("  Closed: {%f %f}\n", currentNode->coords.x, currentNode->coords.y);
         
         // generate/update neighbours
         for(Int8 i = -1; i <= 1; ++i) {
@@ -106,7 +103,6 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
                                 .parent = currentNode
                         };
                         DataStructures_UnorderedArray_AddElem(openNodes, &newNode);
-                        printf("  Open: {%f %f}\n", newNode->coords.x, newNode->coords.y);
                     } else {
                         if(node->distanceFromStart > newDistanceFromStart) {
                             node->distanceFromStart = newDistanceFromStart;

@@ -33,7 +33,7 @@ static double Heuristic(const Node* node);
 static bool DoesPointCollideWithEntity(const ECS_EntityStore* entities, const Point* point);
 
 static Node* FindNodeInArray(DataStructures_UnorderedArray* array, const Point* point);
-
+#include <stdio.h>
 DataStructures_UnorderedArray* Pathfinding_SolveAStar(
     const Point* start,
     const Point* goal,
@@ -47,7 +47,7 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
 
     DataStructures_UnorderedArray* openNodes   = DataStructures_UnorderedArray_Create(sizeof(Node*), 32);
     DataStructures_UnorderedArray* closedNodes = DataStructures_UnorderedArray_Create(sizeof(Node*), 32);
-
+    puts("Start:");
     Node* startNode = malloc(sizeof *startNode);
     *startNode = (Node){
         .coords = {start->x, start->y},
@@ -55,9 +55,8 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
         .distanceToEnd = Distance(start, goal),
         .parent = NULL
     };
-
     DataStructures_UnorderedArray_AddElem(openNodes, &startNode);
-
+    printf("  Open: {%f %f}\n", startNode->coords.x, startNode->coords.y);
     bool foundPath = false;
     Node* goalNode = NULL;
     while(DataStructures_UnorderedArray_GetSize(openNodes) > 0 && !foundPath)
@@ -73,14 +72,15 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
             }
         }
 
-        DataStructures_UnorderedArray_RemoveElem(openNodes, ind);
-        DataStructures_UnorderedArray_AddElem(closedNodes, &currentNode);
-
         if(currentNode->distanceToEnd < gridSize) {
             goalNode = currentNode;
             foundPath = true;
             continue;
         }
+
+        DataStructures_UnorderedArray_RemoveElem(openNodes, ind);
+        DataStructures_UnorderedArray_AddElem(closedNodes, &currentNode);
+        printf("  Closed: {%f %f}\n", currentNode->coords.x, currentNode->coords.y);
         
         // generate/update neighbours
         for(Int8 i = -1; i <= 1; ++i) {
@@ -93,7 +93,7 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
                     currentNode->coords.y + gridSize*i,
                 };
 
-                if(FindNodeInArray(closedNodes, &point) == NULL && !DoesPointCollideWithEntity(entities, &point)) {
+                if(Distance(start, &point) < searchRadious && FindNodeInArray(closedNodes, &point) == NULL && !DoesPointCollideWithEntity(entities, &point)) {
                     Node* node = FindNodeInArray(openNodes, &point);
                     bool isNodeInCorner = (i != 0 && j != 0);
                     double newDistanceFromStart = currentNode->distanceFromStart + ((isNodeInCorner) ? gridSize * sqrt(2) : gridSize);
@@ -106,6 +106,7 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
                                 .parent = currentNode
                         };
                         DataStructures_UnorderedArray_AddElem(openNodes, &newNode);
+                        printf("  Open: {%f %f}\n", newNode->coords.x, newNode->coords.y);
                     } else {
                         if(node->distanceFromStart > newDistanceFromStart) {
                             node->distanceFromStart = newDistanceFromStart;
@@ -115,21 +116,21 @@ DataStructures_UnorderedArray* Pathfinding_SolveAStar(
                 }
             }
         }
-
     }
-    
-    // construct an array of Points to the goal Node
 
+    // construct an array of Points to the goal Node
     DataStructures_UnorderedArray* pointsOfPath = DataStructures_UnorderedArray_Create(sizeof(Point), 2);
     for(Node* node = goalNode; node != NULL; node = node->parent) {
         DataStructures_UnorderedArray_AddElem(pointsOfPath, &node->coords);
     }
 
-    for(UInt32 i = 0; i < DataStructures_UnorderedArray_GetSize(openNodes); ++i)
+    for(UInt32 i = 0; i < DataStructures_UnorderedArray_GetSize(openNodes); ++i) {
         free(*(Node**)DataStructures_UnorderedArray_Get(openNodes, i));
+    }
 
-    for(UInt32 i = 0; i < DataStructures_UnorderedArray_GetSize(closedNodes); ++i)
+    for(UInt32 i = 0; i < DataStructures_UnorderedArray_GetSize(closedNodes); ++i) {
         free(*(Node**)DataStructures_UnorderedArray_Get(closedNodes, i));
+    }
     
     DataStructures_UnorderedArray_Destroy(openNodes);
     DataStructures_UnorderedArray_Destroy(closedNodes);
@@ -159,13 +160,17 @@ static double Heuristic(const Node* node)
 static bool DoesPointCollideWithEntity(const ECS_EntityStore* entities, const Point* point)
 {
     ECS_QueryResult* query = ECS_EntityStore_Query(entities, COLLISION_SIGNATURE);
-    for(EntityId id = 0; id < query->size; ++id) {
+    for(UInt32 i = 0; i < query->size; ++i) {
+        EntityId id = query->entityIdList[i];
         const Components_Collision* hitBox = ECS_EntityStore_GetConstComponent(entities, id, COLLISION_SIGNATURE);
 
-        if(CollisionDetection_PointRect(point, &hitBox->hitBox))
+        if(CollisionDetection_PointRect(point, &hitBox->hitBox)) {
+            ECS_QueryResult_Destroy(query);
             return true;
+        }
     }
 
+    ECS_QueryResult_Destroy(query);
     return false;
 }
 
